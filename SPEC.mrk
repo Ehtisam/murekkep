@@ -1,0 +1,271 @@
+::meta
+başlık: Mürekkep
+sürüm: 0.1
+uzantı: .mrk
+hedef: 2500
+::
+
+;; Bu dosya Mürekkep'in kurallarını Mürekkep'in kendisiyle anlatır.
+;; Aynı zamanda test belgesidir: her özellik burada en az bir kere geçer.
+
+= {$başlık} [taslak]
+
+{$başlık}, düz metinle yazılan bir işaretleme dilidir. Markdown'ın yaptığını kendi kurallarıyla yapar. Bir de Markdown'ın bilmediği bir şeyi bilir: yazılmakta olan metni. Alternatifler, kenar notları, sonra doldurulacak yerler, silinen ama saklanan cümleler belgenin parçasıdır.
+
+Sürüm {$sürüm}, dosya uzantısı *{$uzantı}*.
+
+== İlkeler
+
+- Parser olmadan da okunabilir. Dosyayı Not Defteri'nde açan biri ne yazıldığını anlar.
+- Günlük şeyler tek sembolle, yapılı şeyler `::` bloklarıyla yazılır.
+- Yazma süreci birinci sınıf. Taslak hali de belgenin parçasıdır.
+- Belge aynı zamanda veridir. Her belge JSON'a çevrilebilir.
+
+== İki mod
+
+Görüntüleyici bir belgeyi iki şekilde gösterir:
+
+- *Temiz okuma:* Bitmiş metin gibi. Kenar notları, sorular ve çizikler gizlenir, alternatiflerin ilki gösterilir.
+- *Çalışma:* Her şey görünür. Notlar kenarda durur, çizikler üstü çizili görünür, alternatifler arasında seçim yapılabilir.
+
+Doldurulmamış boşluklar iki modda da görünür, çünkü eksik olan bir şeyi gizlemek yanıltıcı olur.
+
+== Satırlar
+
+Mürekkep satır tabanlıdır. Bir satırın ne olduğu ilk karakterlerinden anlaşılır.
+
+=== Paragraf
+
+Paragraflar boş satırla ayrılır.
+Paragrafın içindeki satır sonları korunur, Markdown'daki gibi tek satıra birleşmez. ;; şiir ve diyalog için önemli
+Uzun bir paragrafı tek satırda yazmak da serbesttir.
+
+=== Başlık
+
+::kod
+= Birinci seviye
+== İkinci seviye
+=== Üçüncü seviye
+::
+
+`=` işaretinden sonra bir boşluk gelir. En fazla altı seviye vardır.
+
+Başlığın sonuna köşeli parantez içinde bir durum yazılabilir: `[taslak]`, `[gözden geçir]` ya da `[bitti]`. Görüntüleyici bölümü buna göre işaretler. Bu belgenin başlığı da öyle.
+
+=== Yorum
+
+`;;` ile başlayan satır hiç görünmez, ne temiz modda ne çalışma modunda. Satır ortasında da kullanılabilir: önünde boşluk varsa `;;` işaretinden satır sonuna kadar her şey yorumdur.
+
+::kod
+;; bu satır görünmez
+Bu cümle görünür. ;; bu kısmı görünmez
+::
+
+=== Alıntı
+
+::kod
+| Alıntı satırları dikey çizgiyle başlar.
+| Peş peşe gelen satırlar tek alıntı olur.
+::
+
+| Kâğıt sabırlıdır, mürekkep değil.
+
+=== Listeler
+
+::kod
+- madde
+- madde
+  - iç içe madde (iki boşluk girinti)
++ numaralı
++ numaralı
+::
+
+- madde
+- madde
+  - iç içe madde
++ birinci
++ ikinci
+
+=== Görevler
+
+::kod
+[ ] yapılacak
+[x] bitti
+[~] sürüyor
+[-] iptal
+::
+
+Her görev kendi satırındadır. Girintiyle iç içe yazılabilir.
+
+=== Ayraç
+
+Tek başına `---` olan satır bölüm ayracıdır.
+
+---
+
+=== Diyalog
+
+Mürekkep diyaloğu bir blok gerektirmeden tanır. Satır başında `@Ad:` varsa o satır bir repliktir.
+
+::kod
+@Ece: Kimse yok mu?
+~ iç ses, düşünce
+(sahne yönü, satırın tamamı parantez içinde)
+-> Gemiye bin  => gemi
+-> Geri dön    => ev
+::
+
+`->` bir seçenektir. `=>` işaretinden sonraki kelime seçeneğin gittiği yerin adıdır. JSON çıktısında bunlar oyun motorunun okuyabileceği veri olarak çıkar.
+
+== Satır içi
+
+::tablo
+Yazılış | Anlamı
+`*kalın*` | *kalın*
+`/italik/` | /italik/
+`_altı çizili_` | _altı çizili_
+`!!vurgu!!` | !!vurgu!!
+`` `kod` `` | `kod`
+`[[not adı]]` | başka bir nota bağlantı
+`[[yazı | https://ornek.com]]` | dış bağlantı
+`![[resim.png | açıklama]]` | görsel
+`#etiket` | etiket
+`@kişi` | kişi
+`^[dipnot]` | dipnot
+`{$değişken}` | meta'daki değer
+::
+
+=== Kurallar
+
+- `/italik/` için açılan `/` işaretinden önce boşluk ya da satır başı, kapanandan sonra boşluk, noktalama ya da satır sonu gelir. Böylece `a/b` ve `https://...` italik olmaz.
+- İçinde ters tırnak geçen kod, iki ters tırnak arasına yazılır. Yukarıdaki tablonun kod satırı böyle.
+- Yalın yazılan adresler kendiliğinden bağlantı olur: https://ornek.com
+- `\` sonraki karakteri sıradan karakter yapar: \*bu kalın değil\*
+- `#etiket` ve `@kişi` boşluktan ya da satır başından sonra gelir. Harf, rakam, `-` ve `_` içerebilir.
+
+Dipnotlar belgenin sonunda toplanır.^[Numaraları sırayla kendiliğinden verilir.]
+
+== Yazma süreci
+
+Mürekkep'i Markdown'dan ayıran kısım burası.
+
+=== Alternatifler
+
+::kod
+Liman {sessizdi | ölü gibiydi | uyuyordu}.
+::
+
+Liman {sessizdi | ölü gibiydi | uyuyordu}.
+
+Süslü parantez içinde `|` ile ayrılmış seçenekler. İlki varsayılandır, temiz modda o görünür. `{$...}` ise değişkendir, alternatif değil.
+
+=== Kenar notu ve soru
+
+::kod
+Ece kapıyı açtı.  >> burası çok hızlı oldu
+Bu sahne gerekli mi?  >? emin değilim
+::
+
+Ece kapıyı açtı.  >> burası çok hızlı oldu
+Bu sahne gerekli mi?  >? emin değilim
+
+`>>` kendine bırakılan nottur. `>?` çözülmesi gereken bir sorudur, görüntüleyici bunları ayrıca sayar. İkisi de satır sonuna kadar sürer ve temiz modda gizlenir.
+
+=== Boşluk
+
+::kod
+Gemi ?? saatte kalkıyordu.
+Gemi ??saat kalkıyordu.
+::
+
+`??` sonra doldurulacak bir yerdir. Hemen arkasına bitişik yazılan kelime ipucudur. Boşluklar iki modda da görünür.
+
+=== Çizik
+
+::kod
+~~Gece çok karanlıktı.~~ Gece zifiri karanlıktı.
+::
+
+~~Gece çok karanlıktı.~~ Gece zifiri karanlıktı.
+
+Çizik silinmiş ama saklanan metindir. Temiz modda hiç görünmez, çalışma modunda üstü çizili görünür. Bu yüzden Mürekkep'te ayrı bir "üstü çizili yazı" stili yoktur.
+
+=== Hedef
+
+Meta'da `hedef: 2500` yazılırsa görüntüleyici kelime sayısını bu hedefe göre gösterir.
+
+== Bloklar
+
+Yapılı içerik `::` bloklarıyla yazılır. Blok `::ad` ile açılır, adın arkasına isteğe bağlı bir argüman gelebilir. Tek başına `::` olan satır bloğu kapatır. Bloklar iç içe yazılabilir.
+
+::kod
+::ad argüman
+içerik
+::
+::
+
+=== meta
+
+Belgenin başında durur. Her satır `anahtar: değer` biçimindedir. Değerler metinde `{$anahtar}` ile kullanılır. Bazı anahtarların özel anlamı vardır: `başlık`, `hedef`.
+
+=== kod
+
+İçi olduğu gibi gösterilir, hiçbir işaret işlenmez. Argümanı dilin adıdır: `::kod js`
+
+Kod bloğunun içinde de `::ad` satırları sayılır, böylece Mürekkep örnekleri kod bloğuna olduğu gibi yazılabilir. Yukarıdaki örnekte iç bloğu kapatan `::` kod bloğunu kapatmaz.
+
+=== tablo
+
+İlk satır başlıktır. Hücreler `|` ile ayrılır. Hücrelerin içinde satır içi işaretler çalışır. Kodun, bağlantının ve alternatifin içindeki `|` hücre ayırmaz.
+
+=== not, uyarı
+
+::not
+Kutu içinde gösterilen bir açıklama. İçinde her şey yazılabilir: *kalın*, listeler, başka bloklar.
+::
+
+::uyarı
+Dikkat edilmesi gereken bir şey.
+::
+
+=== gizli
+
+Tıklanınca açılan içerik. Argümanı görünen başlıktır.
+
+::gizli Sonunu söyleme
+Gemi hiç gelmedi.
+::
+
+=== sahne
+
+Diyalog satırları blok dışında da çalışır, ama `::sahne` bir sahneyi sarmalar ve ona bir yer ya da zaman verir. JSON çıktısında sahneler ayrı birimler olarak çıkar.
+
+::sahne gece, liman
+(uzaktan bir düdük sesi)
+@Ece: Kimse yok mu?
+~ bu iş uzayacak
+@Bekçi: Son gemi ?? kalktı.
+-> Gemiye bin  => gemi
+-> Geri dön    => ev
+::
+
+=== Kendi bloğun
+
+Tanınmayan bir blok adı hata değildir. Parser onu adıyla birlikte genel bir kutu olarak işler. Görüntüleyiciye yeni blok türleri sonradan eklenebilir; format bunun için açıktır.
+
+::harita kuzey
+Burası ileride kendi bloğu olacak.
+::
+
+== Yol haritası
+
+[x] Format taslağı
+[x] Blok kapanışı: `::`
+[~] Spec ({$sürüm})
+[x] Parser: metin → ağaç → HTML ve JSON
+[x] Canlı editör: temiz ve çalışma modu
+[ ] Renkli yazı, iki sütun, matematik? >? ihtiyaç olunca bakılacak
+[ ] Obsidian eklentisi
+[ ] Sublime Text eklentisi
+
+#spec #murekkep @garantech

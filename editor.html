@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mürekkep</title>
+<link rel="stylesheet" href="murekkep.css">
+<style>
+  /* Düzen: solda yazı masası, sağda kâğıt. Üstte araç çubuğu, altta durum çubuğu.
+     Renkler murekkep.css'teki --kagit, --murekkep... değişkenlerinden gelir. */
+  :root {
+    --masa: #ebe8df;
+    --cubuk: #e2ded3;
+    --secim: rgba(42, 74, 138, 0.22);
+    --h-blok: #7b4a9a;
+    --h-kalin: #8a3b12;
+    --h-italik: #2d6a5a;
+    --h-konusan: #1f6b6b;
+    --h-kod: #6a5a2a;
+    --h-alt: rgba(42, 74, 138, 0.12);
+    --ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --masa: #101319;
+      --cubuk: #0c0e13;
+      --secim: rgba(143, 176, 240, 0.25);
+      --h-blok: #c9a3e6;
+      --h-kalin: #f0a77c;
+      --h-italik: #8fd1bd;
+      --h-konusan: #7fd3d3;
+      --h-kod: #d8c48a;
+      --h-alt: rgba(143, 176, 240, 0.16);
+    }
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: var(--masa);
+    color: var(--murekkep);
+    font-family: var(--ui);
+    font-size: 14px;
+    overflow: hidden;
+  }
+
+  /* --- Araç çubuğu --- */
+  .cubuk {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 12px;
+    background: var(--cubuk);
+    border-bottom: 1px solid var(--cizgi);
+  }
+  .marka {
+    font-family: var(--yazi);
+    font-size: 17px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .dosya-adi { color: var(--soluk); margin-right: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .dosya-adi.kirli::after { content: " •"; color: var(--lacivert); }
+  button {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--kutu); }
+  button:focus-visible { outline: 2px solid var(--lacivert); outline-offset: 1px; }
+  .ayrac-dikey { width: 1px; height: 18px; background: var(--cizgi); margin: 0 4px; }
+  .anahtar { display: inline-flex; border: 1px solid var(--cizgi); border-radius: 6px; padding: 2px; }
+  .anahtar button { padding: 3px 10px; border-radius: 4px; }
+  .anahtar button[aria-pressed="true"] { background: var(--murekkep); color: var(--kagit); }
+  button[aria-pressed="true"].tekli { background: var(--kutu); border-color: var(--cizgi); }
+
+  /* --- Çalışma alanı --- */
+  .alan {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: 0;
+  }
+  .alan.surec-acik { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 280px; }
+  .alan[data-gorunum="yazi"] { grid-template-columns: minmax(0, 1fr); }
+  .alan[data-gorunum="yazi"] .kagit-alani { display: none; }
+  .alan[data-gorunum="kagit"] { grid-template-columns: minmax(0, 1fr); }
+  .alan[data-gorunum="kagit"] .yazi-alani { display: none; }
+  .alan.surec-acik[data-gorunum="yazi"], .alan.surec-acik[data-gorunum="kagit"] { grid-template-columns: minmax(0, 1fr) 280px; }
+
+  /* Vurgulama: arkada renkli bir <pre>, önde şeffaf yazılı bir <textarea>.
+     İkisinin yazı tipi, boyutu, boşlukları birebir aynı olmalı; yoksa harfler kayar.
+     Bu yüzden vurgular sadece renk değiştirir, kalınlık ya da boyut değiştirmez. */
+  .yazi-alani { position: relative; min-height: 0; border-right: 1px solid var(--cizgi); }
+  #vurgu, #kaynak {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    box-sizing: border-box;
+    padding: 28px max(20px, calc((100% - 46rem) / 2)) 40vh;
+    border: 0;
+    font-family: var(--kod);
+    font-size: 14.5px;
+    line-height: 1.75;
+    tab-size: 2;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    overflow-y: scroll;
+    letter-spacing: 0;
+    font-variant-ligatures: none;
+  }
+  #vurgu { color: var(--murekkep); pointer-events: none; overflow: hidden scroll; }
+  #kaynak {
+    background: transparent;
+    color: transparent;
+    caret-color: var(--murekkep);
+    resize: none;
+    outline: none;
+  }
+  #kaynak::selection { background: var(--secim); color: transparent; }
+
+  .v-isaret, .v-yorum, .v-dusunce, .v-yon, .v-durum { color: var(--soluk); }
+  .v-yorum { opacity: 0.75; }
+  .v-baslik { color: var(--lacivert); }
+  .v-blok, .v-degisken { color: var(--h-blok); }
+  .v-kod { color: var(--h-kod); }
+  .v-kalin { color: var(--h-kalin); }
+  .v-italik { color: var(--h-italik); }
+  .v-vurgu { background: var(--not); }
+  .v-baglanti, .v-etiket { color: var(--lacivert); }
+  .v-konusan { color: var(--h-konusan); }
+  .v-not { background: var(--not); color: var(--not-yazi); }
+  .v-soru { background: var(--soru); color: var(--soru-yazi); }
+  .v-bosluk { background: var(--soru); color: var(--soru-yazi); }
+  .v-cizik { color: var(--soluk); text-decoration: line-through; }
+  .v-alt { background: var(--h-alt); color: var(--lacivert); }
+
+  /* --- Kâğıt (önizleme) --- */
+  .kagit-alani {
+    position: relative;
+    overflow-y: auto;
+    background: var(--kagit);
+    padding: 40px 24px 40vh;
+    min-height: 0;
+  }
+  .kagit-alani .mrk-alt { cursor: pointer; }
+  .kagit-alani .mrk-alt:hover .mrk-alt-secili { background: var(--h-alt); }
+
+  /* --- Süreç paneli --- */
+  .surec {
+    overflow-y: auto;
+    border-left: 1px solid var(--cizgi);
+    background: var(--masa);
+    padding: 16px 14px 40px;
+    min-height: 0;
+  }
+  .surec h2 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--soluk);
+    margin: 18px 0 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .surec h2:first-child { margin-top: 0; }
+  .surec ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .surec li button {
+    width: 100%;
+    text-align: left;
+    display: grid;
+    grid-template-columns: 2.6em 1fr;
+    gap: 6px;
+    padding: 5px 6px;
+    line-height: 1.4;
+  }
+  .surec .no { color: var(--soluk); font-family: var(--kod); font-size: 11px; padding-top: 2px; font-variant-numeric: tabular-nums; }
+  .surec .bos { color: var(--soluk); font-style: italic; padding: 4px 6px; }
+  .rozet { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid currentColor; border-radius: 99px; padding: 0 6px; color: var(--soluk); margin-left: 4px; }
+  .rozet-taslak { color: var(--soru-yazi); }
+  .rozet-bitti { color: var(--h-italik); }
+
+  /* --- Durum çubuğu --- */
+  .durum {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 5px 12px;
+    background: var(--cubuk);
+    border-top: 1px solid var(--cizgi);
+    color: var(--soluk);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .hedef { display: inline-flex; align-items: center; gap: 8px; color: var(--murekkep); }
+  .hedef-cubuk { width: 90px; height: 4px; background: var(--cizgi); border-radius: 2px; overflow: hidden; }
+  .hedef-cubuk span { display: block; height: 100%; background: var(--lacivert); }
+  .sayac b { font-weight: 600; color: var(--murekkep); }
+  .sayac-soru b { color: var(--soru-yazi); }
+  .konum { margin-left: auto; }
+
+  /* --- Alternatif menüsü --- */
+  .menu {
+    position: fixed;
+    z-index: 10;
+    min-width: 200px;
+    max-width: 360px;
+    background: var(--kagit);
+    border: 1px solid var(--cizgi);
+    border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+    padding: 6px;
+    font-family: var(--ui);
+  }
+  .menu-baslik { font-size: 11px; color: var(--soluk); padding: 4px 8px 6px; }
+  .menu-satir { display: flex; align-items: center; gap: 4px; }
+  .menu-satir .secenek { flex: 1; text-align: left; font-family: var(--yazi); font-size: 15px; }
+  .menu-satir .secenek.secili { color: var(--lacivert); }
+  .menu-satir .kesinlestir { font-size: 12px; color: var(--soluk); }
+
+  .bildirim {
+    position: fixed;
+    bottom: 44px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--murekkep);
+    color: var(--kagit);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 20;
+  }
+  .birak { outline: 3px dashed var(--lacivert); outline-offset: -6px; }
+
+  @media (max-width: 760px) {
+    .alan, .alan.surec-acik { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 1fr; }
+    .surec { display: none; }
+    .yazi-alani { border-right: 0; border-bottom: 1px solid var(--cizgi); }
+    .kagit-alani { padding: 24px 16px 40vh; }
+    #vurgu, #kaynak { padding: 20px 16px 30vh; }
+  }
+</style>
+</head>
+<body>
+
+<header class="cubuk">
+  <span class="marka">Mürekkep</span>
+  <span class="dosya-adi" id="dosyaAdi">adsız.mrk</span>
+  <button id="btnYeni" title="Yeni belge">Yeni</button>
+  <button id="btnAc" title="Aç (Ctrl+O)">Aç</button>
+  <button id="btnKaydet" title="Kaydet (Ctrl+S)">Kaydet</button>
+  <button id="btnJson" title="JSON olarak indir">JSON</button>
+  <button id="btnHtml" title="HTML olarak indir">HTML</button>
+  <span class="ayrac-dikey"></span>
+  <span class="anahtar" role="group" aria-label="Görünüm">
+    <button data-gorunum="yazi" title="Sadece yazı">Yazı</button>
+    <button data-gorunum="ikisi" title="Yazı ve kâğıt">İkisi</button>
+    <button data-gorunum="kagit" title="Sadece kâğıt">Kâğıt</button>
+  </span>
+  <span class="anahtar" role="group" aria-label="Mod">
+    <button data-mod="temiz" title="Temiz okuma (Ctrl+E)">Temiz</button>
+    <button data-mod="calisma" title="Çalışma modu (Ctrl+E)">Çalışma</button>
+  </span>
+  <button id="btnSurec" class="tekli" aria-pressed="false" title="Notlar, sorular, boşluklar">Süreç</button>
+  <input type="file" id="dosyaSec" accept=".mrk,.txt,text/plain" hidden>
+</header>
+
+<main class="alan" id="alan" data-gorunum="ikisi">
+  <section class="yazi-alani" id="yaziAlani">
+    <pre id="vurgu" aria-hidden="true"></pre>
+    <textarea id="kaynak" spellcheck="false" autocapitalize="off" aria-label="Mürekkep kaynağı"></textarea>
+  </section>
+  <section class="kagit-alani" id="kagit"></section>
+  <aside class="surec" id="surec" hidden></aside>
+</main>
+
+<footer class="durum" id="durum"></footer>
+
+<script src="murekkep.js"></script>
+<script>
+'use strict';
+
+// ====================================================================
+// Örnek belge: ilk açılışta, kayıtlı taslak yoksa gösterilir.
+// ====================================================================
+
+const ORNEK = `::meta
+başlık: Liman Gecesi
+kahraman: Ece
+hedef: 400
+::
+
+= Liman Gecesi [taslak]
+
+;; Bu bir örnek belge. Sağdaki kâğıtta nasıl göründüğüne bak,
+;; üstten "Çalışma" moduna geçince notlar ve çizikler de görünür.
+
+{$kahraman} limana indiğinde saat çoktan ?? geçmişti.^[Saat 03:00 civarı olmalı, takvimle karşılaştır.]
+Liman {sessizdi | ölü gibiydi | uyuyordu}. Rıhtımda tek bir fener yanıyordu.  >> fener sonra önemli olacak
+~~Hava çok soğuktu.~~ Rüzgâr denizden /tuz ve pas/ kokusu getiriyordu.
+
+::sahne gece, liman
+(uzaktan bir düdük sesi)
+@Ece: Kimse yok mu?
+~ bu iş uzayacak
+@Bekçi: Son gemi ??saat kalktı, hanım. Bir sonraki sabah.
+-> Bekçiye para teklif et  => rusvet
+-> Fenere doğru yürü       => fener
+::
+
+== Notlar [gözden geçir]
+
+Bu bölüm gerekli mi?  >? belki ikinci bölüme taşınmalı
+
+[x] Liman sahnesi
+[~] Bekçinin adı
+[ ] Fenerin hikâyesi
+[-] Yağmur sahnesi
+
+::gizli Sonunu söyleme
+Gemi hiç gelmedi.
+::
+
+#taslak #liman @Ece
+`;
+
+// ====================================================================
+// Durum
+// ====================================================================
+
+const $ = (id) => document.getElementById(id);
+const kaynak = $('kaynak');
+const vurgu = $('vurgu');
+const kagit = $('kagit');
+const alan = $('alan');
+const surecPaneli = $('surec');
+
+const durum = {
+  mod: 'temiz',
+  gorunum: 'ikisi',
+  surecAcik: false,
+  dosyaAdi: 'adsız.mrk',
+  tutamac: null, // FileSystemFileHandle: dosyanın üstüne kaydetmek için
+  kirli: false,
+  belge: null,
+  alternatifler: new Map(), // altNo -> düğüm
+};
+
+// localStorage her zaman çalışmayabilir (gizli pencere vb.), o yüzden try/catch
+const depo = {
+  oku(anahtar) { try { return localStorage.getItem('murekkep.' + anahtar); } catch { return null; } },
+  yaz(anahtar, deger) { try { localStorage.setItem('murekkep.' + anahtar, deger); } catch {} },
+};
+
+// ====================================================================
+// Vurgulama (editör renklendirmesi)
+// Parser'dan bağımsız, daha kaba bir tarayıcı. Amacı doğru ağaç kurmak değil,
+// yazarken işaretleri renkle göstermek. Sublime eklentisi de aynı kuralları izleyecek.
+// ====================================================================
+
+const kac = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const sp = (sinif, icerik) => `<span class="v-${sinif}">${icerik}</span>`;
+
+// Satır içi kurallar. Her biri "tam bu noktada eşleşiyor mu?" diye bakılan bir sticky regex.
+const SATIR_ICI = [
+  [/\\./y, 'isaret'],
+  [/(`+)[^`]*?\1/y, 'kod'],
+  [/(?<=\s);;.*$/y, 'yorum'],
+  [/(?<=\s|^)>>.*$/y, 'not'],
+  [/(?<=\s|^)>\?.*$/y, 'soru'],
+  [/!?\[\[[^\]]*\]\]/y, 'baglanti'],
+  [/\^\[[^\]]*\]/y, 'isaret'],
+  [/\{\$[\p{L}\p{N}_-]+\}/uy, 'degisken'],
+  [/\{[^{}]*\|[^{}]*\}/y, 'alt'],
+  [/\?\?[\p{L}\p{N}_-]*/uy, 'bosluk'],
+  [/~~[^~]+~~/y, 'cizik'],
+  [/!![^!]+!!/y, 'vurgu'],
+  [/(?<![\p{L}\p{N}])\*(?=\S)[^*]*?\S\*(?![\p{L}\p{N}])/uy, 'kalin'],
+  [/(?<=\s|^|\()\/(?=\S)[^/]*?\S\/(?![\p{L}\p{N}])/uy, 'italik'],
+  [/(?<![\p{L}\p{N}])_(?=\S)[^_]*?\S_(?![\p{L}\p{N}])/uy, 'italik'],
+  [/(?:https?:\/\/|www\.)[^\s<>]+/iy, 'baglanti'],
+  [/(?<=\s|^|\()[#@][\p{L}\p{N}_-]+/uy, 'etiket'],
+];
+// Bu karakterlerden biri yoksa o noktada hiçbir kuralı denemeye gerek yok
+const TETIK = new Set('\\`;>![^{?~*/_#@hHwW');
+
+function satirIciVurgula(s) {
+  let cikti = '';
+  let duz = '';
+  let i = 0;
+  while (i < s.length) {
+    if (TETIK.has(s[i])) {
+      let bulundu = false;
+      for (const [re, sinif] of SATIR_ICI) {
+        re.lastIndex = i;
+        const m = re.exec(s);
+        if (m && m[0].length) {
+          cikti += kac(duz) + sp(sinif, kac(m[0]));
+          duz = '';
+          i += m[0].length;
+          bulundu = true;
+          break;
+        }
+      }
+      if (bulundu) continue;
+    }
+    duz += s[i++];
+  }
+  return cikti + kac(duz);
+}
+
+const onbellek = new Map(); // satır metni -> vurgulu HTML
+
+function satirVurgula(s) {
+  if (onbellek.has(s)) return onbellek.get(s);
+  let m;
+  let h;
+  const duz = s.trim();
+  if (duz.startsWith(';;')) h = sp('yorum', kac(s));
+  else if (/^\s*::/.test(s)) h = sp('blok', kac(s));
+  else if ((m = /^(\s*={1,6}\s)(.*?)(\s*\[(?:taslak|gözden geçir|bitti)\])?$/u.exec(s)))
+    h = sp('isaret', kac(m[1])) + sp('baslik', satirIciVurgula(m[2])) + (m[3] ? sp('durum', kac(m[3])) : '');
+  else if (/^\s*-{3,}\s*$/.test(s)) h = sp('isaret', kac(s));
+  else if ((m = /^(\s*(?:[-+|]|\[[ x~-]\])\s)(.*)$/.exec(s))) h = sp('isaret', kac(m[1])) + satirIciVurgula(m[2]);
+  else if ((m = /^(\s*->\s?)(.*?)(\s+=>\s*\S+)?$/.exec(s)))
+    h = sp('isaret', kac(m[1])) + satirIciVurgula(m[2]) + (m[3] ? sp('blok', kac(m[3])) : '');
+  else if ((m = /^(\s*@[\p{L}\p{N}_-]+:)(.*)$/u.exec(s))) h = sp('konusan', kac(m[1])) + satirIciVurgula(m[2]);
+  else if (/^\s*~\s/.test(s)) h = sp('dusunce', satirIciVurgula(s));
+  else if (/^\s*\(.*\)\s*$/.test(s)) h = sp('yon', kac(s));
+  else h = satirIciVurgula(s);
+  if (onbellek.size > 5000) onbellek.clear();
+  onbellek.set(s, h);
+  return h;
+}
+
+function vurgulaHepsi(metin) {
+  const satirlar = metin.split('\n');
+  const parcalar = [];
+  let kodSeviyesi = 0; // ::kod içindeyken renklendirme yapılmaz
+  for (const s of satirlar) {
+    const duz = s.trim();
+    let h;
+    if (kodSeviyesi > 0) {
+      if (duz === '::') kodSeviyesi--;
+      else if (/^::[\p{L}\p{N}_-]/u.test(duz)) kodSeviyesi++;
+      h = kodSeviyesi === 0 ? sp('blok', kac(s)) : sp('kod', kac(s));
+    } else {
+      if (/^::kod(\s|$)/.test(duz)) kodSeviyesi = 1;
+      h = satirVurgula(s);
+    }
+    parcalar.push(`<span class="sl">${h}</span>`);
+  }
+  // Sondaki boş satırın da yüksekliği olsun diye fazladan bir boşluk
+  return parcalar.join('\n') + '\n ';
+}
+
+// ====================================================================
+// Yeniden çizim
+// ====================================================================
+
+let cizimBekliyor = false;
+let satirElemanlari = []; // kâğıttaki [data-satir] elemanları, kaydırma eşlemesi için
+
+function vurgulamayiGuncelle() {
+  vurgu.innerHTML = vurgulaHepsi(kaynak.value);
+  vurgu.scrollTop = kaynak.scrollTop;
+}
+
+// Kâğıdı, durum çubuğunu ve süreç panelini bir sonraki karede bir kez çizer.
+// Hızlı yazarken her tuşta değil, ekran yenilenirken bir kez çalışır.
+function cizimIste() {
+  if (cizimBekliyor) return;
+  cizimBekliyor = true;
+  requestAnimationFrame(() => {
+    cizimBekliyor = false;
+    ciz();
+  });
+}
+
+function ciz() {
+  const belge = Murekkep.ayristir(kaynak.value);
+  durum.belge = belge;
+
+  kagit.innerHTML = Murekkep.html(belge, { mod: durum.mod, konum: true, icBaglanti: (h) => '#' + h });
+  satirElemanlari = [...kagit.querySelectorAll('[data-satir]')];
+
+  durum.alternatifler.clear();
+  gez(belge, (d) => { if (d.tur === 'alternatif') durum.alternatifler.set(d.altNo, d); });
+
+  durumCubugunuCiz(belge);
+  if (durum.surecAcik) sureciCiz(belge);
+}
+
+// Ağaçtaki her düğümü sırayla ziyaret eder.
+function gez(x, ziyaret) {
+  if (Array.isArray(x)) { for (const y of x) gez(y, ziyaret); return; }
+  if (!x || typeof x !== 'object') return;
+  if (x.tur) ziyaret(x);
+  for (const anahtar in x) {
+    if (anahtar !== 'meta' && anahtar !== 'hamSecenekler') gez(x[anahtar], ziyaret);
+  }
+}
+
+function durumCubugunuCiz(belge) {
+  const ist = Murekkep.istatistik(belge);
+  const parcalar = [];
+  if (ist.hedef) {
+    const yuzde = Math.min(100, Math.round((ist.kelime / ist.hedef) * 100));
+    parcalar.push(
+      `<span class="hedef"><b>${ist.kelime}</b> / ${ist.hedef} kelime` +
+      `<span class="hedef-cubuk"><span style="width:${yuzde}%"></span></span>%${yuzde}</span>`
+    );
+  } else {
+    parcalar.push(`<span class="hedef"><b>${ist.kelime}</b> kelime</span>`);
+  }
+  const sayac = (n, ad, sinif = '') => `<span class="sayac ${sinif}"><b>${n}</b> ${ad}</span>`;
+  parcalar.push(sayac(ist.sorular, 'soru', ist.sorular ? 'sayac-soru' : ''));
+  parcalar.push(sayac(ist.bosluklar, 'boşluk', ist.bosluklar ? 'sayac-soru' : ''));
+  parcalar.push(sayac(ist.notlar, 'not'));
+  parcalar.push(sayac(ist.alternatifler, 'alternatif'));
+  parcalar.push(sayac(ist.cizikler, 'çizik'));
+  parcalar.push(`<span class="konum" id="konum"></span>`);
+  $('durum').innerHTML = parcalar.join('');
+  konumuGuncelle();
+}
+
+// --- Süreç paneli: belgedeki bütün açık işler, tıklayınca o satıra gider ---
+
+function duzYazi(dugumler) {
+  let s = '';
+  gez(dugumler, (d) => { if (d.tur === 'metin' || d.tur === 'kod') s += d.deger; });
+  return s.trim();
+}
+
+function sureciCiz(belge) {
+  const satirlar = kaynak.value.split('\n');
+  const satirMetni = (n) => (satirlar[n - 1] || '').trim();
+  const gruplar = { soru: [], bosluk: [], not: [], alternatif: [], cizik: [] };
+  const bolumler = [];
+
+  gez(belge.cocuklar, (d) => {
+    if (d.tur === 'kenar') gruplar[d.cesit === 'soru' ? 'soru' : 'not'].push({ satir: d.satir, yazi: duzYazi(d.icerik) });
+    else if (d.tur === 'bosluk') gruplar.bosluk.push({ satir: d.satir, yazi: d.ipucu ? `${d.ipucu}: ${satirMetni(d.satir)}` : satirMetni(d.satir) });
+    else if (d.tur === 'alternatif') gruplar.alternatif.push({ satir: d.satir, yazi: d.hamSecenekler.join(' | ') });
+    else if (d.tur === 'cizik') gruplar.cizik.push({ satir: d.satir, yazi: duzYazi(d.icerik) });
+    else if (d.tur === 'baslik') bolumler.push(d);
+  });
+  gez(belge.dipnotlar, (d) => {
+    if (d.tur === 'bosluk') gruplar.bosluk.push({ satir: d.satir, yazi: 'dipnotta: ' + satirMetni(d.satir) });
+  });
+
+  const liste = (ogeler) =>
+    ogeler.length
+      ? `<ul>${ogeler.map((o) => `<li><button data-git="${o.satir}"><span class="no">${o.satir}</span><span>${kac(o.yazi || '…')}</span></button></li>`).join('')}</ul>`
+      : '<div class="bos">yok</div>';
+
+  const grup = (baslik, ogeler) => `<h2><span>${baslik}</span><span>${ogeler.length}</span></h2>${liste(ogeler)}`;
+
+  const bolumHTML = bolumler.length
+    ? `<ul>${bolumler
+        .map((b) => {
+          const metin = satirMetni(b.satir).replace(/^=+\s*/, '').replace(/\s*\[[^\]]*\]$/, '');
+          const rozet = b.durum ? `<span class="rozet rozet-${b.durum === 'bitti' ? 'bitti' : b.durum === 'taslak' ? 'taslak' : 'gozden'}">${kac(b.durum)}</span>` : '';
+          const girinti = '&nbsp;'.repeat((b.seviye - 1) * 3);
+          return `<li><button data-git="${b.satir}"><span class="no">${b.satir}</span><span>${girinti}${kac(metin)}${rozet}</span></button></li>`;
+        })
+        .join('')}</ul>`
+    : '<div class="bos">yok</div>';
+
+  surecPaneli.innerHTML =
+    grup('Açık sorular', gruplar.soru) +
+    grup('Boşluklar', gruplar.bosluk) +
+    grup('Kenar notları', gruplar.not) +
+    grup('Alternatifler', gruplar.alternatif) +
+    grup('Çizikler', gruplar.cizik) +
+    `<h2><span>Bölümler</span><span>${bolumler.length}</span></h2>${bolumHTML}`;
+}
+
+surecPaneli.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-git]');
+  if (b) satiraGit(Number(b.dataset.git));
+});
+
+// ====================================================================
+// Editör yardımcıları
+// ====================================================================
+
+function satirBaslangici(n) {
+  // n. satırın (1'den başlar) metindeki başlangıç konumu
+  const metin = kaynak.value;
+  let konum = 0;
+  for (let i = 1; i < n; i++) {
+    const j = metin.indexOf('\n', konum);
+    if (j === -1) return metin.length;
+    konum = j + 1;
+  }
+  return konum;
+}
+
+function satiraGit(n) {
+  const bas = satirBaslangici(n);
+  let son = kaynak.value.indexOf('\n', bas);
+  if (son === -1) son = kaynak.value.length;
+  kaynak.focus();
+  kaynak.setSelectionRange(bas, son);
+  const satirEl = vurgu.querySelectorAll('.sl')[n - 1];
+  if (satirEl) kaynak.scrollTop = satirEl.offsetTop - kaynak.clientHeight / 3;
+  if (durum.gorunum === 'kagit') gorunumSec('ikisi');
+}
+
+// Metni geri alınabilir şekilde değiştirir (Ctrl+Z çalışsın diye execCommand)
+function metniDegistir(bas, son, yeni) {
+  kaynak.focus();
+  kaynak.setSelectionRange(bas, son);
+  if (!document.execCommand('insertText', false, yeni)) {
+    kaynak.setRangeText(yeni, bas, son, 'end');
+    kaynak.dispatchEvent(new Event('input'));
+  }
+}
+
+function mevcutSatir() {
+  const i = kaynak.selectionStart;
+  const bas = kaynak.value.lastIndexOf('\n', i - 1) + 1;
+  let son = kaynak.value.indexOf('\n', i);
+  if (son === -1) son = kaynak.value.length;
+  return { bas, son, metin: kaynak.value.slice(bas, son) };
+}
+
+function konumuGuncelle() {
+  const el = $('konum');
+  if (!el) return;
+  const once = kaynak.value.slice(0, kaynak.selectionStart);
+  const satir = once.split('\n').length;
+  const sutun = kaynak.selectionStart - once.lastIndexOf('\n');
+  el.textContent = `satır ${satir}, sütun ${sutun}`;
+}
+
+function sar(isaret) {
+  const { selectionStart: a, selectionEnd: b, value } = kaynak;
+  const secili = value.slice(a, b);
+  metniDegistir(a, b, isaret + secili + isaret);
+  if (!secili) kaynak.setSelectionRange(a + isaret.length, a + isaret.length);
+}
+
+kaynak.addEventListener('keydown', (e) => {
+  const ctrl = e.ctrlKey || e.metaKey;
+
+  if (e.key === 'Tab' && !ctrl) {
+    e.preventDefault();
+    const s = mevcutSatir();
+    if (e.shiftKey) {
+      const kalan = s.metin.replace(/^ {1,2}/, '');
+      const fark = s.metin.length - kalan.length;
+      if (fark) {
+        const imlec = kaynak.selectionStart;
+        metniDegistir(s.bas, s.son, kalan);
+        kaynak.setSelectionRange(Math.max(s.bas, imlec - fark), Math.max(s.bas, imlec - fark));
+      }
+    } else {
+      metniDegistir(kaynak.selectionStart, kaynak.selectionEnd, '  ');
+    }
+    return;
+  }
+
+  // Enter: listeyi, görevleri ve alıntıyı sürdür. Boş öğede Enter listeyi bitirir.
+  if (e.key === 'Enter' && !ctrl && !e.shiftKey && kaynak.selectionStart === kaynak.selectionEnd) {
+    const s = mevcutSatir();
+    const m = /^(\s*)([-+|]|\[[ x~-]\])\s(.*)$/.exec(s.metin);
+    if (m && kaynak.selectionStart === s.son) {
+      e.preventDefault();
+      if (!m[3].trim()) {
+        metniDegistir(s.bas, s.son, ''); // boş öğe: işareti sil
+      } else {
+        const isaret = m[2].startsWith('[') ? '[ ]' : m[2];
+        metniDegistir(s.son, s.son, `\n${m[1]}${isaret} `);
+      }
+    }
+    return;
+  }
+
+  if (ctrl && e.key.toLowerCase() === 'b') { e.preventDefault(); sar('*'); }
+  else if (ctrl && e.key.toLowerCase() === 'i') { e.preventDefault(); sar('/'); }
+});
+
+kaynak.addEventListener('input', () => {
+  vurgulamayiGuncelle();
+  kirliYap(true);
+  cizimIste();
+  taslakKaydet();
+});
+
+['keyup', 'click', 'select'].forEach((olay) => kaynak.addEventListener(olay, konumuGuncelle));
+
+// ====================================================================
+// Kaydırma: editör kaydıkça kâğıt da aynı yere gelir
+// ====================================================================
+
+let kaydirmaBekliyor = false;
+kaynak.addEventListener('scroll', () => {
+  vurgu.scrollTop = kaynak.scrollTop;
+  if (kaydirmaBekliyor) return;
+  kaydirmaBekliyor = true;
+  requestAnimationFrame(() => {
+    kaydirmaBekliyor = false;
+    kagidiEsle();
+  });
+});
+
+function ustSatir() {
+  // Görünen en üst satırı ikili aramayla bul
+  const satirlar = vurgu.querySelectorAll('.sl');
+  const hedef = kaynak.scrollTop + 28;
+  let lo = 0;
+  let hi = satirlar.length - 1;
+  while (lo < hi) {
+    const orta = (lo + hi + 1) >> 1;
+    if (satirlar[orta].offsetTop <= hedef) lo = orta;
+    else hi = orta - 1;
+  }
+  return lo + 1;
+}
+
+function kagidiEsle() {
+  if (durum.gorunum !== 'ikisi' || !satirElemanlari.length) return;
+  if (kaynak.scrollTop < 4) { kagit.scrollTop = 0; return; }
+  const n = ustSatir();
+  let secilen = satirElemanlari[0];
+  for (const el of satirElemanlari) {
+    if (Number(el.dataset.satir) <= n) secilen = el;
+    else break;
+  }
+  kagit.scrollTop = secilen.offsetTop - 40;
+}
+
+// ====================================================================
+// Kâğıtta tıklama: alternatif seçimi ve bağlantılar
+// ====================================================================
+
+let acikMenu = null;
+
+function menuyuKapat() {
+  if (acikMenu) acikMenu.remove();
+  acikMenu = null;
+}
+
+kagit.addEventListener('click', (e) => {
+  const alt = e.target.closest('.mrk-alt');
+  if (alt) {
+    e.preventDefault();
+    alternatifMenusu(alt, Number(alt.dataset.altNo));
+    return;
+  }
+  const a = e.target.closest('a');
+  if (!a) return;
+  if (a.classList.contains('mrk-dis')) {
+    e.preventDefault();
+    window.open(a.href, '_blank', 'noopener');
+  } else if (a.classList.contains('mrk-ic')) {
+    e.preventDefault();
+    bildir(`Bağlantı: ${a.dataset.hedef}`);
+  }
+});
+
+function alternatifMenusu(el, altNo) {
+  menuyuKapat();
+  const d = durum.alternatifler.get(altNo);
+  if (!d) return;
+
+  const menu = document.createElement('div');
+  menu.className = 'menu';
+  menu.innerHTML =
+    `<div class="menu-baslik">Alternatifler · satır ${d.satir}</div>` +
+    d.hamSecenekler
+      .map(
+        (s, i) =>
+          `<div class="menu-satir"><button class="secenek${i === 0 ? ' secili' : ''}" data-i="${i}" title="Varsayılan yap">${kac(s)}</button>` +
+          `<button class="kesinlestir" data-kesin="${i}" title="Diğerlerini sil, sadece bunu bırak">kesinleştir</button></div>`
+      )
+      .join('');
+
+  menu.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.i !== undefined) alternatifiUygula(d, Number(b.dataset.i), false);
+    else alternatifiUygula(d, Number(b.dataset.kesin), true);
+    menuyuKapat();
+  });
+
+  document.body.appendChild(menu);
+  const r = el.getBoundingClientRect();
+  const mr = menu.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(r.left, innerWidth - mr.width - 8)) + 'px';
+  menu.style.top = (r.bottom + 6 + mr.height > innerHeight ? r.top - mr.height - 6 : r.bottom + 6) + 'px';
+  acikMenu = menu;
+}
+
+// Seçeneği öne alır ya da (kesin ise) süslü parantezi tamamen kaldırıp onu bırakır.
+function alternatifiUygula(d, i, kesin) {
+  const bas = satirBaslangici(d.satir);
+  let son = kaynak.value.indexOf('\n', bas);
+  if (son === -1) son = kaynak.value.length;
+  const j = kaynak.value.slice(bas, son).indexOf(d.ham);
+  if (j === -1) { bildir('Alternatif kaynakta bulunamadı'); return; }
+
+  let yeni;
+  if (kesin) yeni = d.hamSecenekler[i];
+  else {
+    const sira = [d.hamSecenekler[i], ...d.hamSecenekler.filter((_, k) => k !== i)];
+    yeni = `{${sira.join(' | ')}}`;
+  }
+  const kaydirma = kaynak.scrollTop;
+  metniDegistir(bas + j, bas + j + d.ham.length, yeni);
+  kaynak.scrollTop = kaydirma;
+}
+
+document.addEventListener('mousedown', (e) => {
+  if (acikMenu && !acikMenu.contains(e.target)) menuyuKapat();
+});
+
+// ====================================================================
+// Dosya işlemleri
+// Chrome ve Edge, dosyanın üstüne doğrudan kaydetmeye izin veriyor (File System Access).
+// Desteklemeyen tarayıcıda Aç dosya seçici, Kaydet indirme olur.
+// ====================================================================
+
+const dosyaTurleri = [{ description: 'Mürekkep belgesi', accept: { 'text/plain': ['.mrk'] } }];
+
+function kirliYap(kirli) {
+  durum.kirli = kirli;
+  $('dosyaAdi').classList.toggle('kirli', kirli);
+}
+
+function belgeYukle(metin, ad, tutamac = null) {
+  kaynak.value = metin;
+  durum.dosyaAdi = ad;
+  durum.tutamac = tutamac;
+  $('dosyaAdi').textContent = ad;
+  kirliYap(false);
+  kaynak.scrollTop = 0;
+  kaynak.setSelectionRange(0, 0);
+  vurgulamayiGuncelle();
+  ciz();
+  taslakKaydet();
+}
+
+async function dosyaAc() {
+  if (durum.kirli && !confirm('Kaydedilmemiş değişiklikler var. Yine de açılsın mı?')) return;
+  if (window.showOpenFilePicker) {
+    try {
+      const [tutamac] = await showOpenFilePicker({ types: dosyaTurleri });
+      const dosya = await tutamac.getFile();
+      belgeYukle(await dosya.text(), dosya.name, tutamac);
+    } catch (e) {
+      if (e.name !== 'AbortError') bildir('Dosya açılamadı: ' + e.message);
+    }
+  } else {
+    $('dosyaSec').click();
+  }
+}
+
+$('dosyaSec').addEventListener('change', async (e) => {
+  const dosya = e.target.files[0];
+  if (dosya) belgeYukle(await dosya.text(), dosya.name);
+  e.target.value = '';
+});
+
+async function kaydet(farkli = false) {
+  const metin = kaynak.value;
+  try {
+    if (!farkli && durum.tutamac) {
+      await yaz(durum.tutamac, metin);
+    } else if (window.showSaveFilePicker) {
+      const tutamac = await showSaveFilePicker({ suggestedName: durum.dosyaAdi, types: dosyaTurleri });
+      await yaz(tutamac, metin);
+      durum.tutamac = tutamac;
+      durum.dosyaAdi = tutamac.name;
+      $('dosyaAdi').textContent = tutamac.name;
+    } else {
+      indir(durum.dosyaAdi, metin, 'text/plain');
+    }
+    kirliYap(false);
+    bildir('Kaydedildi');
+  } catch (e) {
+    if (e.name !== 'AbortError') bildir('Kaydedilemedi: ' + e.message);
+  }
+}
+
+async function yaz(tutamac, metin) {
+  const akis = await tutamac.createWritable();
+  await akis.write(metin);
+  await akis.close();
+}
+
+function indir(ad, metin, tur) {
+  const url = URL.createObjectURL(new Blob([metin], { type: tur + ';charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = ad;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const kokAd = () => durum.dosyaAdi.replace(/\.[^.]+$/, '');
+
+function jsonIndir() {
+  indir(kokAd() + '.json', Murekkep.json(Murekkep.ayristir(kaynak.value)), 'application/json');
+}
+
+// HTML'e stil dosyasını gömmeye çalışır; tarayıcı izin vermezse bağlantı olarak ekler.
+function htmlIndir() {
+  const belge = Murekkep.ayristir(kaynak.value);
+  let stil = '<link rel="stylesheet" href="murekkep.css">';
+  try {
+    const sayfa = [...document.styleSheets].find((s) => s.href && s.href.endsWith('murekkep.css'));
+    const kurallar = [...sayfa.cssRules].map((r) => r.cssText).join('\n');
+    if (kurallar) stil = `<style>\n${kurallar}\n</style>`;
+  } catch {}
+  const baslik = (belge.meta['başlık'] || kokAd()).replace(/</g, '&lt;');
+  const sayfa = `<!doctype html>\n<html lang="tr">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${baslik}</title>\n${stil}\n</head>\n<body>\n${Murekkep.html(belge, { mod: durum.mod })}\n</body>\n</html>\n`;
+  indir(kokAd() + '.html', sayfa, 'text/html');
+}
+
+function yeniBelge() {
+  if (durum.kirli && !confirm('Kaydedilmemiş değişiklikler var. Yine de yeni belge açılsın mı?')) return;
+  belgeYukle('::meta\nbaşlık: \n::\n\n= \n', 'adsız.mrk');
+  kaynak.setSelectionRange(15, 15); // "başlık: " satırının sonu
+  kaynak.focus();
+}
+
+// Dosyayı pencereye sürükleyip bırakmak
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  document.body.classList.add('birak');
+});
+document.addEventListener('dragleave', (e) => {
+  if (!e.relatedTarget) document.body.classList.remove('birak');
+});
+document.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  document.body.classList.remove('birak');
+  const oge = e.dataTransfer.items && e.dataTransfer.items[0];
+  if (!oge || oge.kind !== 'file') return;
+  // Sürüklenen öğeye sadece bu olayın içinde erişilebiliyor; ilk await'ten önce ikisini de al
+  const yedekDosya = oge.getAsFile();
+  const tutamacSozu = oge.getAsFileSystemHandle ? oge.getAsFileSystemHandle().catch(() => null) : Promise.resolve(null);
+  if (durum.kirli && !confirm('Kaydedilmemiş değişiklikler var. Yine de açılsın mı?')) return;
+  const tutamac = await tutamacSozu;
+  const dosyaTutamaci = tutamac && tutamac.kind === 'file' ? tutamac : null;
+  const dosya = dosyaTutamaci ? await dosyaTutamaci.getFile() : yedekDosya;
+  if (dosya) belgeYukle(await dosya.text(), dosya.name, dosyaTutamaci);
+});
+
+window.addEventListener('beforeunload', (e) => {
+  if (durum.kirli && durum.tutamac) e.preventDefault();
+});
+
+// Taslak her değişiklikte tarayıcıya da yazılır; sayfa kapanırsa kaybolmaz.
+let taslakZamanlayici = null;
+function taslakKaydet() {
+  clearTimeout(taslakZamanlayici);
+  taslakZamanlayici = setTimeout(() => {
+    depo.yaz('taslak', kaynak.value);
+    depo.yaz('dosyaAdi', durum.dosyaAdi);
+  }, 400);
+}
+
+// ====================================================================
+// Mod, görünüm, kısayollar
+// ====================================================================
+
+function modSec(mod) {
+  durum.mod = mod;
+  document.querySelectorAll('[data-mod]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mod === mod)));
+  depo.yaz('mod', mod);
+  ciz();
+}
+
+function gorunumSec(gorunum) {
+  durum.gorunum = gorunum;
+  alan.dataset.gorunum = gorunum;
+  document.querySelectorAll('[data-gorunum]').forEach((b) => {
+    if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', String(b.dataset.gorunum === gorunum));
+  });
+  depo.yaz('gorunum', gorunum);
+  vurgulamayiGuncelle(); // genişlik değişince satır kırılmaları değişir
+}
+
+function surecAc(acik) {
+  durum.surecAcik = acik;
+  surecPaneli.hidden = !acik;
+  alan.classList.toggle('surec-acik', acik);
+  $('btnSurec').setAttribute('aria-pressed', String(acik));
+  depo.yaz('surec', acik ? '1' : '0');
+  if (acik) sureciCiz(durum.belge || Murekkep.ayristir(kaynak.value));
+  vurgulamayiGuncelle();
+}
+
+let bildirimZamanlayici = null;
+function bildir(metin) {
+  let el = document.querySelector('.bildirim');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'bildirim';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = metin;
+  clearTimeout(bildirimZamanlayici);
+  bildirimZamanlayici = setTimeout(() => el.remove(), 1800);
+}
+
+document.querySelectorAll('[data-mod]').forEach((b) => b.addEventListener('click', () => modSec(b.dataset.mod)));
+document.querySelectorAll('button[data-gorunum]').forEach((b) => b.addEventListener('click', () => gorunumSec(b.dataset.gorunum)));
+$('btnSurec').addEventListener('click', () => surecAc(!durum.surecAcik));
+$('btnYeni').addEventListener('click', yeniBelge);
+$('btnAc').addEventListener('click', dosyaAc);
+$('btnKaydet').addEventListener('click', () => kaydet());
+$('btnJson').addEventListener('click', jsonIndir);
+$('btnHtml').addEventListener('click', htmlIndir);
+
+document.addEventListener('keydown', (e) => {
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (!ctrl) {
+    if (e.key === 'Escape') menuyuKapat();
+    return;
+  }
+  const k = e.key.toLowerCase();
+  if (k === 's') { e.preventDefault(); kaydet(e.shiftKey); }
+  else if (k === 'o') { e.preventDefault(); dosyaAc(); }
+  else if (k === 'e') { e.preventDefault(); modSec(durum.mod === 'temiz' ? 'calisma' : 'temiz'); }
+});
+
+window.addEventListener('resize', vurgulamayiGuncelle);
+
+// ====================================================================
+// Başlangıç
+// ====================================================================
+
+durum.mod = depo.oku('mod') === 'calisma' ? 'calisma' : 'temiz';
+document.querySelectorAll('[data-mod]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mod === durum.mod)));
+gorunumSec(['yazi', 'ikisi', 'kagit'].includes(depo.oku('gorunum')) ? depo.oku('gorunum') : 'ikisi');
+
+const taslak = depo.oku('taslak');
+belgeYukle(taslak !== null ? taslak : ORNEK, depo.oku('dosyaAdi') || 'liman-gecesi.mrk');
+if (taslak !== null) kirliYap(true);
+surecAc(depo.oku('surec') === '1');
+
+// Yazı tipleri geç yüklenirse satır kırılmaları değişir; vurgulamayı yeniden hizala
+if (document.fonts) document.fonts.ready.then(vurgulamayiGuncelle);
+</script>
+</body>
+</html>
