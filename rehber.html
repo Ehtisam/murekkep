@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mürekkep Rehberi</title>
+<link rel="stylesheet" href="murekkep.css">
+<style>
+  /* Düzen: solda içindekiler (sırayla öğrenilecek bölümler), sağda örnekler.
+     Her örnek: solda yazdığın (düzenlenebilir), sağda gördüğün. */
+  :root {
+    --masa: #ebe8df;
+    --ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --masa: #101319; }
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--masa);
+    color: var(--murekkep);
+    font-family: var(--ui);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .sayfa { display: grid; grid-template-columns: 230px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; }
+
+  /* İçindekiler */
+  nav.icindekiler {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 36px 20px 40px 24px;
+    box-sizing: border-box;
+  }
+  .icindekiler .marka { font-family: var(--yazi); font-size: 20px; font-weight: 600; margin-bottom: 22px; display: block; color: inherit; text-decoration: none; }
+  .icindekiler ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; counter-reset: b; }
+  .icindekiler a { display: grid; grid-template-columns: 1.6em 1fr; padding: 5px 8px; border-radius: 5px; color: var(--soluk); text-decoration: none; font-size: 14px; }
+  .icindekiler a:hover { background: var(--kutu); color: var(--murekkep); }
+  .icindekiler a.etkin { color: var(--murekkep); background: var(--kutu); }
+  .icindekiler .no { font-family: var(--kod); font-size: 12px; padding-top: 2px; }
+  .icindekiler .ayri { margin-top: 14px; border-top: 1px solid var(--cizgi); padding-top: 14px; }
+
+  main { padding: 36px 32px 120px; min-width: 0; }
+
+  /* Giriş */
+  .giris { max-width: 46rem; margin-bottom: 48px; }
+  .giris h1 { font-family: var(--yazi); font-size: 2.6rem; line-height: 1.1; margin: 0 0 14px; text-wrap: balance; }
+  .giris p { font-size: 1.05rem; margin: 0 0 12px; }
+  .dortlu { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 26px 0 0; }
+  .dortlu div { background: var(--kagit); border: 1px solid var(--cizgi); border-radius: 6px; padding: 12px 14px; }
+  .dortlu b { display: block; font-size: 13px; margin-bottom: 4px; }
+  .dortlu span { display: block; color: var(--soluk); font-size: 13px; line-height: 1.45; }
+  .dortlu code { font-family: var(--kod); font-size: 12px; color: var(--murekkep); }
+
+  /* Bölümler */
+  section.bolum { margin: 0 0 64px; scroll-margin-top: 20px; }
+  .bolum > header { max-width: 46rem; margin-bottom: 20px; }
+  .bolum-no { font-family: var(--kod); font-size: 12px; color: var(--soluk); letter-spacing: 0.06em; }
+  .bolum h2 { font-family: var(--yazi); font-size: 1.8rem; margin: 2px 0 6px; line-height: 1.2; }
+  .bolum > header p { margin: 0; color: var(--soluk); }
+
+  /* Örnek */
+  .ornek { margin: 0 0 22px; }
+  .ornek-ust { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .ornek h3 { font-size: 15px; margin: 0; }
+  .ornek-ust p { margin: 0; color: var(--soluk); font-size: 14px; flex: 1 1 22rem; }
+  .ornek-govde {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    border: 1px solid var(--cizgi);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--kagit);
+  }
+  .yazdigin, .gordugun { min-width: 0; position: relative; }
+  .yazdigin { background: var(--kutu); border-right: 1px solid var(--cizgi); }
+  .etiket-ust {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--soluk);
+    border-bottom: 1px solid var(--cizgi);
+  }
+  .yazdigin textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    resize: none;
+    background: transparent;
+    color: var(--murekkep);
+    font-family: var(--kod);
+    font-size: 13.5px;
+    line-height: 1.65;
+    padding: 12px 14px 16px;
+    overflow: hidden;
+    tab-size: 2;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+  .yazdigin textarea:focus { outline: none; background: color-mix(in srgb, var(--kutu) 70%, var(--kagit)); }
+  .gordugun .mrk { font-size: 1rem; max-width: none; padding: 6px 18px 14px; }
+  .gordugun .mrk > :first-child { margin-top: 0.6em; }
+  .gordugun .mrk h1 { font-size: 1.7rem; margin-top: 0.4em; }
+  .gordugun .mrk h2 { font-size: 1.3rem; }
+  .gorunmez { color: var(--soluk); font-style: italic; font-size: 14px; padding: 16px 18px; }
+  .uyari-listesi { margin: 0 18px 14px; padding: 10px 12px; border-radius: 6px; background: var(--soru); color: var(--soru-yazi); font-size: 13px; list-style: none; }
+  .uyari-listesi li::before { content: "uyarı · "; font-weight: 600; }
+
+  .kucuk-dugmeler { display: inline-flex; gap: 4px; }
+  .kucuk-dugmeler button {
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--soluk);
+    background: transparent;
+    border: 1px solid var(--cizgi);
+    border-radius: 99px;
+    padding: 1px 9px;
+    cursor: pointer;
+  }
+  .kucuk-dugmeler button[aria-pressed="true"] { background: var(--murekkep); color: var(--kagit); border-color: var(--murekkep); }
+  .kucuk-dugmeler button:focus-visible { outline: 2px solid var(--lacivert); outline-offset: 1px; }
+  .sifirla[hidden] { display: none; }
+
+  .ipucu { max-width: 46rem; background: var(--kagit); border: 1px solid var(--cizgi); border-radius: 6px; padding: 10px 14px; font-size: 14px; margin: 0 0 22px; }
+  .ipucu b { color: var(--lacivert); }
+
+  /* Kopya kâğıdı */
+  .kopya { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .kopya-kutu { background: var(--kagit); border: 1px solid var(--cizgi); border-radius: 8px; padding: 14px 16px 10px; min-width: 0; }
+  .kopya-kutu h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--soluk); }
+  .kopya-kutu table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .kopya-kutu td { padding: 5px 0; border-top: 1px solid var(--cizgi); vertical-align: top; }
+  .kopya-kutu td:first-child { width: 48%; padding-right: 12px; }
+  .kopya-kutu code { font-family: var(--kod); font-size: 12.5px; white-space: pre-wrap; }
+  .kopya-kutu .gizli-ipucu { color: var(--soluk); font-size: 12.5px; }
+
+  a { color: var(--lacivert); }
+  /* JetBrains Mono "->" ve "=>" işaretlerini oka çevirir; sözdizimi öğretirken yanıltır */
+  code, textarea { font-family: var(--kod); font-variant-ligatures: none; }
+  .giris code, .bolum > header code, .ornek-ust code, .ipucu code { font-size: 0.88em; background: var(--kutu); padding: 0.05em 0.3em; border-radius: 3px; }
+
+  @media (max-width: 1000px) {
+    .sayfa { grid-template-columns: minmax(0, 1fr); }
+    nav.icindekiler { position: static; height: auto; padding: 24px 16px 0; }
+    .icindekiler ol { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    main { padding: 24px 16px 80px; }
+  }
+  @media (max-width: 760px) {
+    .ornek-govde { grid-template-columns: minmax(0, 1fr); }
+    .yazdigin { border-right: 0; border-bottom: 1px solid var(--cizgi); }
+    .dortlu, .kopya { grid-template-columns: minmax(0, 1fr); }
+    .giris h1 { font-size: 2rem; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+</head>
+<body>
+<div class="sayfa">
+
+<nav class="icindekiler" aria-label="İçindekiler">
+  <a class="marka" href="#giris">Mürekkep Rehberi</a>
+  <ol id="icindekiler"></ol>
+</nav>
+
+<main>
+  <div class="giris" id="giris">
+    <h1>Mürekkep nasıl yazılır</h1>
+    <p>Mürekkep düz metinle yazılan bir işaretleme dili. Yazdığın dosyayı Not Defteri'nde açan biri de ne yazdığını anlar; Mürekkep'in araçları ise onu düzgün bir sayfaya çevirir.</p>
+    <p>Aşağıdaki her örnekte solda <b>yazdığın</b>, sağda <b>gördüğün</b> var. Soldaki kutuya tıklayıp istediğini değiştir, sağ taraf anında güncellenir. Bozarsan "sıfırla"ya bas.</p>
+    <p>Bazı örneklerde sağ üstte <b>temiz</b> ve <b>çalışma</b> düğmeleri var. Temiz, bitmiş metin gibi gösterir. Çalışma, notları, çizikleri ve taslak işaretlerini de gösterir.</p>
+    <div class="dortlu">
+      <div><b>Satır başı işaretleri</b><span>Satırın ne olduğunu söyler: <code>=</code> başlık, <code>-</code> madde, <code>@Ece:</code> replik.</span></div>
+      <div><b>Satır içi işaretler</b><span>Bir parçayı süsler: <code>*kalın*</code>, <code>/italik/</code>, <code>[[bağlantı]]</code>.</span></div>
+      <div><b>Bloklar</b><span>Birden çok satırı sarar: <code>::sahne</code> ile açılır, tek başına <code>::</code> ile kapanır.</span></div>
+      <div><b>Yazma süreci</b><span>Taslağın kendisi: <code>{a | b}</code>, <code>&gt;&gt; not</code>, <code>??</code>. Temiz okumada kaybolur.</span></div>
+    </div>
+  </div>
+
+  <div id="bolumler"></div>
+
+  <section class="bolum" id="kopya">
+    <header>
+      <div class="bolum-no">KOPYA KÂĞIDI</div>
+      <h2>Hepsi tek bakışta</h2>
+      <p>Öğrendikten sonra yazarken yanında açık dursun diye.</p>
+    </header>
+    <div class="kopya">
+      <div class="kopya-kutu">
+        <h3>Satır başı</h3>
+        <table>
+          <tr><td><code>= Başlık</code></td><td>başlık (<code>==</code>, <code>===</code> alt seviyeler)</td></tr>
+          <tr><td><code>= Başlık [taslak]</code></td><td>bölüm durumu: taslak, gözden geçir, bitti</td></tr>
+          <tr><td><code>- madde</code></td><td>madde</td></tr>
+          <tr><td><code>+ madde</code></td><td>numaralı madde</td></tr>
+          <tr><td><code>[ ]  [x]  [~]  [-]</code></td><td>görev: yapılacak, bitti, sürüyor, iptal</td></tr>
+          <tr><td><code>| söz</code></td><td>alıntı</td></tr>
+          <tr><td><code>---</code></td><td>ayraç</td></tr>
+          <tr><td><code>;; not</code></td><td>görünmez satır</td></tr>
+          <tr><td><code>@Ece: Selam.</code></td><td>replik</td></tr>
+          <tr><td><code>~ düşünce</code></td><td>iç ses</td></tr>
+          <tr><td><code>(kapı açılır)</code></td><td>sahne yönü</td></tr>
+          <tr><td><code>-&gt; Kaç =&gt; kacis</code></td><td>seçenek ve gittiği sahne</td></tr>
+          <tr><td><code>-&gt; Aç =&gt; kapi ?anahtar</code></td><td>koşullu seçenek (<code>?!</code> yoksa)</td></tr>
+          <tr><td><code>$anahtar</code>  <code>$altın = 5</code></td><td>bayrak koy, değer ver</td></tr>
+          <tr><td><code>![[bölüm.mrk]]</code></td><td>başka dosyayı buraya dahil et</td></tr>
+        </table>
+      </div>
+      <div class="kopya-kutu">
+        <h3>Satır içi</h3>
+        <table>
+          <tr><td><code>*kalın*</code></td><td><b>kalın</b></td></tr>
+          <tr><td><code>/italik/</code></td><td><i>italik</i></td></tr>
+          <tr><td><code>_altı çizili_</code></td><td><u>altı çizili</u></td></tr>
+          <tr><td><code>!!vurgu!!</code></td><td><mark>vurgu</mark></td></tr>
+          <tr><td><code>`kod`</code></td><td>kod</td></tr>
+          <tr><td><code>[[not]]</code>  <code>[[yazı | adres]]</code></td><td>bağlantı</td></tr>
+          <tr><td><code>![[resim.png | açıklama]]</code></td><td>görsel</td></tr>
+          <tr><td><code>#etiket</code>  <code>@kişi</code></td><td>etiket, kişi</td></tr>
+          <tr><td><code>^[dipnot]</code></td><td>dipnot</td></tr>
+          <tr><td><code>$x^2$</code></td><td>matematik</td></tr>
+          <tr><td><code>\*</code></td><td>işareti sıradan karakter yap</td></tr>
+        </table>
+        <h3 style="margin-top:16px">Süslü parantez</h3>
+        <table>
+          <tr><td><code>{a | b | c}</code></td><td>alternatifler, ilki geçerli</td></tr>
+          <tr><td><code>{$ad}</code></td><td>değişken (meta ya da bayrak)</td></tr>
+          <tr><td><code>{kırmızı: metin}</code></td><td>renk</td></tr>
+          <tr><td><code>{kelime = anlam}</code></td><td>anlam notu</td></tr>
+        </table>
+      </div>
+      <div class="kopya-kutu">
+        <h3>Yazma süreci</h3>
+        <table>
+          <tr><td><code>{sessiz | ölü gibi}</code></td><td>karar vermedim</td></tr>
+          <tr><td><code>&gt;&gt; hızlı oldu</code></td><td>kendime not</td></tr>
+          <tr><td><code>&gt;? gerekli mi</code></td><td>çözülmesi gereken soru</td></tr>
+          <tr><td><code>??</code>  <code>??saat</code></td><td>sonra doldurulacak yer</td></tr>
+          <tr><td><code>~~eski cümle~~</code></td><td>sildim ama saklıyorum</td></tr>
+          <tr><td><code>::çekmece</code></td><td>kestiğim paragraflar</td></tr>
+          <tr><td><code>::özet</code></td><td>bölümün özeti (panoda kartta)</td></tr>
+          <tr><td><code>hedef: 2000</code>  <code>son: 2026-11-30</code></td><td>meta'da kelime hedefi ve son tarih</td></tr>
+        </table>
+        <p class="gizli-ipucu">Bunların hepsi temiz okumada kaybolur; sadece <code>??</code> kalır, çünkü eksik olan bir şeyi gizlemek yanıltıcı olur.</p>
+      </div>
+      <div class="kopya-kutu">
+        <h3>Bloklar</h3>
+        <table>
+          <tr><td><code>::meta</code></td><td><code>anahtar: değer</code> satırları; metinde <code>{$anahtar}</code></td></tr>
+          <tr><td><code>::sahne ad: tarif</code></td><td>sahne; seçenekler adına gider</td></tr>
+          <tr><td><code>::kişi Ece</code></td><td>karakter kartı</td></tr>
+          <tr><td><code>::zaman</code></td><td>zaman çizelgesi, satırlar <code>tarih | olay</code></td></tr>
+          <tr><td><code>::tablo</code></td><td>tablo, hücreler <code>|</code> ile</td></tr>
+          <tr><td><code>::sütunlar</code></td><td>yan yana sütunlar, aralarında <code>||</code></td></tr>
+          <tr><td><code>::not</code>  <code>::uyarı</code></td><td>kutu</td></tr>
+          <tr><td><code>::gizli Başlık</code></td><td>tıklayınca açılan</td></tr>
+          <tr><td><code>::kod js</code></td><td>kod, olduğu gibi</td></tr>
+          <tr><td><code>::matematik</code></td><td>ortalanmış formül</td></tr>
+          <tr><td><code>::başka-bir-ad</code></td><td>kendi bloğun, hata vermez</td></tr>
+        </table>
+        <p class="gizli-ipucu">Her blok tek başına <code>::</code> olan bir satırla kapanır. Bloklar iç içe yazılabilir.</p>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script src="kutuphane/katex/katex.min.js"></script>
+<script src="murekkep.js"></script>
+<script>
+'use strict';
+
+// Rehberin içeriği: bölümler ve örnekleri. Sırası öğrenme sırasıdır.
+// mod: örneğin hangi modda açılacağı. iki: temiz/çalışma düğmeleri görünsün mü.
+// kontrol: kontrol uyarılarını da göster. dosyalar: dahil etme örneği için sahte dosyalar.
+const BOLUMLER = [
+  {
+    id: 'duz-yazi',
+    baslik: 'Düz yazı',
+    aciklama: 'Hiçbir işaret kullanmadan yazdığın her şey paragraftır. Biçim vermek için işaretler kelimeye yapışık yazılır.',
+    ornekler: [
+      {
+        baslik: 'Paragraf ve satır sonu',
+        aciklama: 'Boş satır yeni paragraf açar. Alt alta yazdığın satırlar alt alta kalır, Markdown\'daki gibi birleşmez.',
+        kod: 'Rüzgâr denizden esiyordu.\nFener yanıp sönüyordu.\n\nBu yeni bir paragraf.',
+      },
+      {
+        baslik: 'Yazı biçimleri',
+        aciklama: 'İşaret kelimeye yapışık olmalı. Bu sayede a/b ya da dosya_adi gibi yazılar biçime dönüşmez.',
+        kod: 'Bu *kalın*, bu /italik/, bu _altı çizili_.\nBu !!fosforlu kalemle!! işaretlenmiş.\nBu da `kod` gibi.\n\nve/veya, dosya_adi, 2*3 olduğu gibi kalır.',
+      },
+      {
+        baslik: 'Görünmez satır ve kaçış',
+        aciklama: '`;;` ile başlayan satırı sadece sen görürsün. Bir işareti sıradan karakter yapmak için önüne `\\` koy.',
+        kod: ';; Bu satır sayfada çıkmaz.\nBu cümle görünür. ;; bu kısım görünmez\n\n\\*bunlar\\* yıldız olarak kalır.',
+      },
+    ],
+  },
+  {
+    id: 'yapi',
+    baslik: 'Yapı',
+    aciklama: 'Başlıklar, listeler, görevler, alıntılar. Hepsi satır başına konan bir işaretle yazılır.',
+    ornekler: [
+      {
+        baslik: 'Başlıklar',
+        aciklama: '`#` işareti etiketlere ayrıldığı için başlıklar `=` ile yazılır. Ne kadar çok `=`, o kadar alt seviye.',
+        kod: '= Kitabın adı\n== Birinci bölüm\n=== Bir alt bölüm',
+      },
+      {
+        baslik: 'Listeler',
+        aciklama: '`-` madde, `+` numaralı madde. İç içe liste için iki boşluk girinti.',
+        kod: '- elma\n- armut\n  - iç içe\n  - bir tane daha\n\n+ birinci\n+ ikinci',
+      },
+      {
+        baslik: 'Görevler',
+        aciklama: 'Her görev kendi satırında. Köşeli parantezin içi durumunu söyler.',
+        kod: '[ ] yapılacak\n[x] bitti\n[~] sürüyor\n[-] vazgeçildi',
+      },
+      {
+        baslik: 'Alıntı ve ayraç',
+        aciklama: '`|` alıntı, tek başına `---` bölüm ayracı.',
+        kod: '| Kâğıt sabırlıdır, mürekkep değil.\n\n---\n\nAyraçtan sonraki kısım.',
+      },
+      {
+        baslik: 'Tablo',
+        aciklama: 'İlk satır başlık, hücreler `|` ile ayrılır.',
+        kod: '::tablo\nAd | Yaş | Yer\nEce | 24 | Kuzey\nBekçi | ? | Fener\n::',
+      },
+    ],
+  },
+  {
+    id: 'baglantilar',
+    baslik: 'Bağlantılar, etiketler, dipnotlar',
+    aciklama: 'Notları birbirine bağlamak ve işaretlemek için.',
+    ornekler: [
+      {
+        baslik: 'Bağlantılar',
+        aciklama: '`[[not adı]]` başka bir nota gider; editörde klasör açıkken tıklayınca o dosya açılır. Dış adres için `[[yazı | adres]]` ya da adresi düz yaz. Görsel için başına `!` koy: `![[resim.png]]`.',
+        kod: '[[Liman notları]] başka bir nota gider.\n[[site | https://ornek.com]] dışarıya gider.\nAdres yazınca da olur: https://ornek.com',
+      },
+      {
+        baslik: 'Etiket, kişi, dipnot',
+        aciklama: '`#etiket` ve `@kişi` boşluktan sonra gelir. Dipnotlar sayfanın sonunda toplanır.',
+        kod: 'Bugün #lore üzerine çalıştım, @Ece ile ilgili.\nKayıtlar yanmış.^[Kesin değil, 431 yılı olabilir.]',
+      },
+    ],
+  },
+  {
+    id: 'diyalog',
+    baslik: 'Diyalog ve sahne',
+    aciklama: 'Senaryo ve oyun metinleri için. Diyalog satırları blok gerektirmez, istediğin yerde yazabilirsin.',
+    ornekler: [
+      {
+        baslik: 'Replik, iç ses, sahne yönü',
+        aciklama: '`@Ad:` replik, `~` iç ses, parantez içindeki tam satır sahne yönü. Ad tek kelime olmalı: `@Yaşlı_Bekçi:`',
+        kod: '(kapı gıcırdar)\n@Ece: Kimse yok mu?\n~ bu iş uzayacak\n@Bekçi: Geç kaldın.',
+      },
+      {
+        baslik: 'Sahne',
+        aciklama: 'Bir sahneyi sarmalar. İki noktadan önceki kelime sahnenin adı, sonrası tarifi. Seçenekler sahneye adıyla gider.',
+        kod: '::sahne liman: gece, liman\n(uzaktan bir düdük sesi)\n@Ece: Kimse yok mu?\n-> Gemiye bin => gemi\n-> Geri dön   => ev\n::',
+        mod: 'calisma',
+        iki: true,
+      },
+    ],
+  },
+  {
+    id: 'surec',
+    baslik: 'Yazma süreci',
+    aciklama: 'Mürekkep\'i Markdown\'dan ayıran kısım. Bunlar taslağın kendisi: karar veremediğin yerler, kendine notların, sonra dolduracağın boşluklar. Temiz okumada kaybolurlar.',
+    ipucu: 'Bu bölümdeki örnekler <b>çalışma</b> modunda açılıyor. <b>temiz</b> düğmesine basıp neyin kaybolduğuna bak.',
+    ornekler: [
+      {
+        baslik: 'Alternatifler',
+        aciklama: 'Karar veremediğin yerde seçenekleri yan yana yaz. Temiz okumada ilki görünür. Editörde kâğıttaki alternatife tıklayıp birini seçebilirsin.',
+        kod: 'Liman {sessizdi | ölü gibiydi | uyuyordu}.',
+        mod: 'calisma',
+        iki: true,
+      },
+      {
+        baslik: 'Kenar notu ve soru',
+        aciklama: '`>>` kendine not, `>?` çözülmesi gereken soru. İkisi de satırın sonuna kadar sürer.',
+        kod: 'Ece kapıyı açtı.  >> burası çok hızlı oldu\nBu sahne gerekli mi?  >? emin değilim',
+        mod: 'calisma',
+        iki: true,
+      },
+      {
+        baslik: 'Boşluk',
+        aciklama: 'Bilmediğin bir şey için yer tut. Bitişik yazdığın kelime oraya ne geleceğini hatırlatır. Eksik olduğu için temiz okumada da görünür.',
+        kod: 'Gemi ?? saatte kalktı.\nGemi ??saat kalktı.',
+        mod: 'calisma',
+        iki: true,
+      },
+      {
+        baslik: 'Çizik',
+        aciklama: 'Sildiğin ama atmaya kıyamadığın cümle. Temiz okumada hiç görünmez.',
+        kod: '~~Gece çok karanlıktı.~~ Gece zifiri karanlıktı.',
+        mod: 'calisma',
+        iki: true,
+      },
+      {
+        baslik: 'Bölüm durumu',
+        aciklama: 'Başlığın sonuna yazılır. Editörün süreç panelinde ve panoda görünür.',
+        kod: '== Varış [bitti]\n== Fener [gözden geçir]\n== Son [taslak]',
+        mod: 'calisma',
+        iki: true,
+      },
+      {
+        baslik: 'Özet ve çekmece',
+        aciklama: '`::özet` bölümün kısa özeti; panoda kartın üstünde çıkar. `::çekmece` kestiğin paragrafların durduğu yer. İkisi de temiz okumada görünmez, kelime sayısına girmez.',
+        kod: '== Fener\n\n::özet\nEce fenerin bekçisiyle tanışır.\n::\n\nKapı aralıktı.\n\n::çekmece\nBekçi aslında Ece\'nin dayısıydı. Fazla mı?\n::',
+        mod: 'calisma',
+        iki: true,
+      },
+      {
+        baslik: 'Kelime hedefi ve son tarih',
+        aciklama: 'Belgenin başındaki meta bloğuna yazılır. Sayfada görünmez; editörün alt çubuğu hedefe ne kadar yaklaştığını ve günde kaç kelime yazman gerektiğini gösterir.',
+        kod: '::meta\nhedef: 2000\nson: 2026-11-30\n::',
+      },
+    ],
+  },
+  {
+    id: 'dunya',
+    baslik: 'Dünya ve karakterler',
+    aciklama: 'Hikâyenin dünyasını tutmak için: tek yerden değişen adlar, karakter kartları, uydurma dillerin kelimeleri, olayların sırası.',
+    ornekler: [
+      {
+        baslik: 'Meta ve değişkenler',
+        aciklama: 'Meta bloğundaki her `anahtar: değer`, metinde `{$anahtar}` ile kullanılır. Karakterin adını değiştirmek istersen tek yerden değiştirirsin.',
+        kod: '::meta\nkahraman: Ece\nşehir: Kuzey Limanı\n::\n\n{$kahraman}, {$şehir}\'na gece yarısı indi.',
+      },
+      {
+        baslik: 'Karakter kartı',
+        aciklama: 'Baştaki `anahtar: değer` satırları kartın alanları, sonrası serbest metin. Editörde metindeki `@Ece` adının üstüne gelince bu kart çıkar.',
+        kod: '::kişi Ece\nyaş: 24\nmemleket: Kuzey limanları\nDenizden korkar ama bunu kimseye söylemez.\n::',
+      },
+      {
+        baslik: 'Anlam notu',
+        aciklama: 'Kelimenin üstünde küçük harflerle anlamını gösterir. Uydurma dillerle yazılmış metinler için.',
+        kod: 'Tabelada tek kelime vardı: {vel\'ardh = su toprağı}.\n{ardh = toprak} {vel = su}',
+      },
+      {
+        baslik: 'Zaman çizelgesi',
+        aciklama: 'Her satır `tarih | olay`. Tarih herhangi bir metin olabilir, kendi takviminle yazabilirsin.',
+        kod: '::zaman\n412 | Liman kuruldu\n419 | Fener ilk kez yandı\n431 | Son gemi kalktı\n::',
+      },
+    ],
+  },
+  {
+    id: 'oyun',
+    baslik: 'Etkileşimli hikâye',
+    aciklama: 'Sahneler, seçenekler ve bayraklarla dallanan hikâye. Editörün Oynat sekmesinde oynanır, JSON çıktısı bir oyun motoruna verilebilir.',
+    ornekler: [
+      {
+        baslik: 'Bayrak ve koşul',
+        aciklama: '`$anahtar` bir bayrak koyar. Seçeneğin sonundaki `?anahtar` "bayrak varsa", `?!anahtar` "yoksa" demek. Hangi seçeneğin görüneceğine oyun sırasında karar verilir; burada hepsi görünür.',
+        kod: '::sahne fener: fenerin dibi\n@Bekçi: Al şunu, lazım olur.\n$anahtar\n-> Kapıyı aç  => kapi ?anahtar\n-> Kapıyı kır => kapi ?!anahtar\n::\n\n::sahne kapi: fenerin içi\nMerdivenler yukarı uzanıyordu.\n::',
+        mod: 'calisma',
+        iki: true,
+        kontrol: true,
+      },
+      {
+        baslik: 'Kontrol',
+        aciklama: 'Mürekkep kopuk uçları bulur: olmayan bir sahneye giden seçenek, hiç konmayan bir bayrağa bakan koşul, tanımsız değişken. Örnekteki hatayı düzeltmeyi dene.',
+        kod: '::sahne a\n-> İleri git => b\n-> Kaç       => olmayan\n::\n\n::sahne b\n-> Kapıyı aç => a ?anahtar\n::',
+        mod: 'calisma',
+        kontrol: true,
+      },
+    ],
+  },
+  {
+    id: 'duzen',
+    baslik: 'Düzen ve özel bloklar',
+    aciklama: 'Kutular, renkler, sütunlar, formüller ve dosyaları birleştirmek.',
+    ornekler: [
+      {
+        baslik: 'Not, uyarı, gizli',
+        aciklama: '`::gizli` tıklayınca açılır; argümanı görünen başlıktır.',
+        kod: '::not\nKutu içinde bir açıklama.\n::\n\n::uyarı\nDikkat edilmesi gereken bir şey.\n::\n\n::gizli Sonunu söyleme\nGemi hiç gelmedi.\n::',
+      },
+      {
+        baslik: 'Renkli yazı',
+        aciklama: 'Renkler: kırmızı, turuncu, sarı, yeşil, mavi, mor, gri.',
+        kod: '{kırmızı: Dur!} {mavi: Deniz} {yeşil: Orman} {mor: Gece} {gri: fısıltı}',
+      },
+      {
+        baslik: 'Sütunlar',
+        aciklama: 'Sütunlar tek başına `||` olan satırla ayrılır. Dar ekranda alt alta iner.',
+        kod: '::sütunlar\n*Ece*\nLiman, gece, korku.\n||\n*Bekçi*\nFener, sır, para.\n::',
+      },
+      {
+        baslik: 'Matematik',
+        aciklama: 'Satır içinde `$` arasına, uzun formüller `::matematik` bloğuna TeX yazılır. Önünde harf ya da rakam olan `$` matematik başlatmaz, yani 50$ bozulmaz.',
+        kod: 'Enerji: $E = mc^2$, fiyatı 50$.\n\n::matematik\n\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}\n::',
+      },
+      {
+        baslik: 'Kod',
+        aciklama: 'İçi olduğu gibi gösterilir, hiçbir işaret işlenmez.',
+        kod: '::kod js\nconsole.log("*bu kalın değil*");\n::',
+      },
+      {
+        baslik: 'Dosya dahil etme',
+        aciklama: 'Başka bir Mürekkep dosyası olduğu yere gelir. Uzun bir metni bölüm bölüm ayrı dosyalarda yazıp birleştirmek için. Burada bölüm-1.mrk diye sahte bir dosya var; editörde bunun için klasör açman gerekir.',
+        kod: '= Kitap\n![[bölüm-1.mrk]]\n![[olmayan.mrk]]',
+        dosyalar: { 'bölüm-1.mrk': '== Varış\nEce limana gece yarısı indi.' },
+      },
+      {
+        baslik: 'Kendi bloğun',
+        aciklama: 'Tanınmayan bir blok adı hata vermez, genel bir kutu olur. İleride kendi blok türlerini böyle eklersin.',
+        kod: '::harita kuzey\nBurası ileride kendi bloğu olacak.\n::',
+      },
+    ],
+  },
+];
+
+// ------------------------------------------------------------------
+
+const kac = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// Açıklamalardaki `kod` parçalarını <code> yapar
+const aciklamaHTML = (s) => kac(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+
+const matematik = window.katex
+  ? (tex, blok) => katex.renderToString(tex, { output: 'mathml', displayMode: blok, throwOnError: false })
+  : undefined;
+
+function ornekCiz(kutu) {
+  const o = kutu._ornek;
+  const metin = kutu.querySelector('textarea').value;
+  const ayar = {};
+  if (o.dosyalar) ayar.dahilOku = (yol) => o.dosyalar[yol] ?? null;
+  const belge = Murekkep.ayristir(metin, ayar);
+  let h = Murekkep.html(belge, { mod: kutu._mod, matematik, icBaglanti: (x) => '#' + x });
+  const bos = !h.replace(/<\/?article[^>]*>/g, '').trim();
+  if (bos) h = '<div class="gorunmez">Sayfada görünmez.</div>';
+  if (o.kontrol) {
+    const uyarilar = Murekkep.kontrol(belge);
+    if (uyarilar.length) h += `<ul class="uyari-listesi">${uyarilar.map((u) => `<li>satır ${u.satir}: ${kac(u.mesaj)}</li>`).join('')}</ul>`;
+  }
+  kutu.querySelector('.cikti').innerHTML = h;
+  kutu.querySelector('.sifirla').hidden = metin === o.kod;
+}
+
+function boyutla(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function sayfayiKur() {
+  const bolumler = document.getElementById('bolumler');
+  const icindekiler = document.getElementById('icindekiler');
+
+  BOLUMLER.forEach((b, bi) => {
+    const no = String(bi + 1);
+    icindekiler.insertAdjacentHTML('beforeend', `<li><a href="#${b.id}"><span class="no">${no}</span><span>${kac(b.baslik)}</span></a></li>`);
+
+    const bolum = document.createElement('section');
+    bolum.className = 'bolum';
+    bolum.id = b.id;
+    bolum.innerHTML =
+      `<header><div class="bolum-no">BÖLÜM ${no}</div><h2>${kac(b.baslik)}</h2><p>${aciklamaHTML(b.aciklama)}</p></header>` +
+      (b.ipucu ? `<div class="ipucu">${b.ipucu}</div>` : '');
+
+    b.ornekler.forEach((o, oi) => {
+      const kutu = document.createElement('div');
+      kutu.className = 'ornek';
+      kutu._ornek = o;
+      kutu._mod = o.mod || 'temiz';
+      const kimlik = `${b.id}-${oi}`;
+      const modDugmeleri = o.iki
+        ? `<span class="kucuk-dugmeler" role="group" aria-label="Mod"><button data-mod="temiz">temiz</button><button data-mod="calisma">çalışma</button></span>`
+        : '';
+      kutu.innerHTML =
+        `<div class="ornek-ust"><h3>${kac(o.baslik)}</h3><p>${aciklamaHTML(o.aciklama)}</p></div>` +
+        `<div class="ornek-govde">` +
+        `<div class="yazdigin"><div class="etiket-ust"><label for="${kimlik}">yazdığın</label><span class="kucuk-dugmeler"><button class="sifirla" hidden>sıfırla</button></span></div>` +
+        `<textarea id="${kimlik}" spellcheck="false" rows="1"></textarea></div>` +
+        `<div class="gordugun"><div class="etiket-ust"><span>gördüğün</span>${modDugmeleri}</div><div class="cikti"></div></div>` +
+        `</div>`;
+      const ta = kutu.querySelector('textarea');
+      ta.value = o.kod;
+      ta.addEventListener('input', () => { boyutla(ta); ornekCiz(kutu); });
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          ta.setRangeText('  ', ta.selectionStart, ta.selectionEnd, 'end');
+          ta.dispatchEvent(new Event('input'));
+        }
+      });
+      kutu.querySelector('.sifirla').addEventListener('click', () => {
+        ta.value = o.kod;
+        boyutla(ta);
+        ornekCiz(kutu);
+      });
+      kutu.querySelectorAll('[data-mod]').forEach((d) => {
+        d.setAttribute('aria-pressed', String(d.dataset.mod === kutu._mod));
+        d.addEventListener('click', () => {
+          kutu._mod = d.dataset.mod;
+          kutu.querySelectorAll('[data-mod]').forEach((x) => x.setAttribute('aria-pressed', String(x === d)));
+          ornekCiz(kutu);
+        });
+      });
+      bolum.appendChild(kutu);
+      ornekCiz(kutu);
+    });
+    bolumler.appendChild(bolum);
+  });
+
+  icindekiler.insertAdjacentHTML('beforeend', `<li class="ayri"><a href="#kopya"><span class="no">≡</span><span>Kopya kâğıdı</span></a></li>`);
+
+  // Textarea'lar görünür olduktan sonra yüksekliklerini ayarla
+  document.querySelectorAll('.yazdigin textarea').forEach(boyutla);
+
+  // Okunan bölümü içindekilerde işaretle
+  const baglantilar = [...icindekiler.querySelectorAll('a')];
+  const gozlemci = new IntersectionObserver(
+    (girdiler) => {
+      for (const g of girdiler) {
+        if (!g.isIntersecting) continue;
+        baglantilar.forEach((a) => a.classList.toggle('etkin', a.getAttribute('href') === '#' + g.target.id));
+      }
+    },
+    { rootMargin: '-20% 0px -70% 0px' }
+  );
+  document.querySelectorAll('section.bolum').forEach((s) => gozlemci.observe(s));
+}
+
+sayfayiKur();
+window.addEventListener('resize', () => document.querySelectorAll('.yazdigin textarea').forEach(boyutla));
+if (document.fonts) document.fonts.ready.then(() => document.querySelectorAll('.yazdigin textarea').forEach(boyutla));
+</script>
+</body>
+</html>

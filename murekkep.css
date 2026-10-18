@@ -73,7 +73,7 @@ body {
 .mrk h3 { font-size: 1.2rem; }
 
 .mrk a { color: var(--lacivert); }
-.mrk code, .mrk pre { font-family: var(--kod); font-size: 0.85em; }
+.mrk code, .mrk pre { font-family: var(--kod); font-size: 0.85em; font-variant-ligatures: none; }
 .mrk code { background: var(--kutu); padding: 0.1em 0.3em; border-radius: 3px; }
 .mrk pre { background: var(--kutu); padding: 1em; overflow-x: auto; line-height: 1.5; }
 .mrk pre code { background: none; padding: 0; }

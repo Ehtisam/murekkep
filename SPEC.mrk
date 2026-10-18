@@ -412,9 +412,9 @@ Burası ileride kendi bloğu olacak.
 [~] Spec ({$sürüm})
 [x] Parser: metin → ağaç → HTML ve JSON
 [x] Canlı editör: temiz ve çalışma modu
-[~] Sürüm 0.2: çekmece, özet, son tarih, dahil etme, kişi, anlam notu, zaman, sahne adı, bayrak, koşul, renk, sütunlar, matematik
-[ ] Editör: pano görünümü, oynat modu, kontrol uyarıları, karakter kartları
-[ ] Rehber ve kopya kâğıdı
+[x] Sürüm 0.2: çekmece, özet, son tarih, dahil etme, kişi, anlam notu, zaman, sahne adı, bayrak, koşul, renk, sütunlar, matematik
+[x] Editör: pano görünümü, oynat modu, kontrol uyarıları, karakter kartları
+[x] Rehber ve kopya kâğıdı
 [ ] Obsidian eklentisi
 [ ] Sublime Text eklentisi
 
