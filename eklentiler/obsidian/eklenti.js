@@ -191,6 +191,7 @@ class MurekkepGorunumu extends TextFileView {
 
     this.kagit.innerHTML = Murekkep.html(belge, { mod: this.mod, matematik: matematikYerTutucu, icBaglanti: (h) => h, konum: true });
     for (const a of this.kagit.querySelectorAll('a.mrk-ic')) a.addClass('internal-link');
+    this.eklenti.gorselleriCoz(this.kagit, dosyaYolu);
     await matematigiCiz(this.kagit);
     this.bilgiyiCiz(belge);
     this.eklenti.durumCubugunuGuncelle();
@@ -381,6 +382,7 @@ class MurekkepEklentisi extends Plugin {
           this.app.workspace.openLinkText(a.dataset.hedef, ctx.sourcePath, Keymap.isModEvent(e));
         });
       }
+      this.gorselleriCoz(el, ctx.sourcePath);
       await matematigiCiz(el);
     });
 
@@ -449,6 +451,18 @@ class MurekkepEklentisi extends Plugin {
     await yaprak.openFile(dosya);
     const g = yaprak.view;
     if (g instanceof MurekkepGorunumu && !g.duzenleme) g.duzenlemeyiDegistir();
+  }
+
+  // ![[resim.png]] yollarını kasadaki dosyaya çevirir (Obsidian dosyaları app:// adresinden sunar)
+  gorselleriCoz(kutu, kaynakYol) {
+    for (const img of kutu.querySelectorAll('img.mrk-gorsel')) {
+      const kaynak = img.getAttribute('src') || '';
+      if (/^(https?:|data:|app:|blob:)/i.test(kaynak)) continue;
+      const ad = decodeURI(kaynak);
+      let dosya = this.app.vault.getAbstractFileByPath(normalizePath(Murekkep.yol.birlestir(Murekkep.yol.dizin(kaynakYol), ad)));
+      if (!(dosya instanceof TFile)) dosya = this.app.metadataCache.getFirstLinkpathDest(ad, kaynakYol);
+      if (dosya instanceof TFile) img.src = this.app.vault.getResourcePath(dosya);
+    }
   }
 
   // ![[dosya.mrk]] satırlarını izleyip dahil edilen dosyaları önceden okur (parser eşzamanlı çalışır,

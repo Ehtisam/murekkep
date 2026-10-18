@@ -1,0 +1,149 @@
+::meta
+başlık: Liman Gecesi
+kahraman: Ece
+şehir: Kuzey Limanı
+altın: 3
+hedef: 1500
+son: 2026-11-30
+::
+
+;; Mürekkep'in bütün özelliklerini kullanan örnek belge.
+;; Çalışma moduna geçince notlar, çizikler, sahne adları ve bayraklar da görünür.
+;; Sahneleri oynatmak için editörde Oynat sekmesine bak.
+
+= {$başlık} [taslak]
+
+| Kâğıt sabırlıdır, mürekkep değil.
+| liman kapısındaki yazıt
+
+== Varış [gözden geçir]
+
+::özet
+{$kahraman} gece yarısı {$şehir}'na iner ve son gemiyi kaçırdığını öğrenir.
+::
+
+{$kahraman} limana indiğinde saat çoktan ?? geçmişti.^[Takvime göre üçüncü ayın son gecesi. Saati sonra netleştir.]
+Liman {sessizdi | ölü gibiydi | uyuyordu}. Rıhtımda tek bir fener yanıyordu.  >> fener sonra önemli olacak
+~~Hava çok soğuktu.~~ Rüzgâr denizden /tuz ve pas/ kokusu getiriyordu.
+
+Cebinde *üç* altın, sırtında _ıslak_ bir palto vardı. Hepsi bu kadardı.
+Rıhtımdaki tabelada eski dilde tek kelime yazıyordu: {vel'ardh = su toprağı}.
+Altına biri tebeşirle !!GİTME!! diye karalamıştı.  >? tebeşir yazısı fazla mı açık
+
+![[fener.svg | Fenerin eski bir çizimi]]
+
+::sahne liman: gece, rıhtım
+(uzaktan bir düdük sesi)
+@Ece: Kimse yok mu?
+~ bu iş uzayacak
+@Bekçi: Son gemi ??saat kalktı, hanım. Bir sonraki sabah.
+-> Bekçiye para teklif et  => rusvet ?altın
+-> Fenere doğru yürü       => fener
+::
+
+::sahne rusvet: rıhtım, bekçinin kulübesi
+@Bekçi: Bir tanesi yeter. {kırmızı: Şunu da al} ve git buradan.
+(avucuna paslı bir anahtar bırakır)
+$anahtar
+$altın = 2
+-> Fenere doğru yürü => fener
+::
+
+::sahne fener: fenerin dibi
+(kapı kilitli, içeriden ışık sızıyor)
+Kapının üstünde silik harfler vardı: {ardh = toprak} {vel = su}.
+Cebinde {$altın} altın kalmıştı.
+-> Anahtarla kapıyı aç => kapi ?anahtar
+-> Kapıyı zorla        => kapi ?!anahtar
+-> Limana dön          => liman
+::
+
+::sahne kapi: fenerin içi
+Merdivenler yukarı, karanlığa doğru uzanıyordu. Her basamağa bir sayı oyulmuştu.
+::
+
+== Fener [taslak]
+
+::özet
+Fenerin içi ve basamaklardaki sayılar.
+::
+
+Basamaklar 1'den 144'e kadar numaralanmıştı. Bekçiye göre hepsinin toplamı fenerin yaşıydı:
+
+::matematik
+\sum_{k=1}^{144} k = \frac{144 \cdot 145}{2} = 10440
+::
+
+Ece bunun bir yaş olamayacağını biliyordu. $10440$ yıl önce burada liman bile yoktu.
+Bu bölüm gerekli mi?  >? belki ikinci bölüme taşınmalı
+
+::çekmece
+Bekçi aslında Ece'nin dayısıydı. Fazla mı?
+::
+
+::not
+Fenerin ışığı her 7 saniyede bir dönüyor. Sahnelerde tutarlı kullan.
+::
+
+::uyarı
+Fener 419'da yandı; 431'deki olaylarla çelişmesin.
+::
+
+::gizli Sonunu söyleme
+Gemi hiç gelmedi. Ece fenerde kaldı.
+::
+
+== Dünya
+
+=== Karakterler
+
+![[karakterler.mrk]]
+
+=== Zaman çizelgesi
+
+::zaman
+412 | Liman kuruldu
+419 | Fener ilk kez yandı
+431 | Son gemi kalktı ^[Kesin değil, kayıtlar yanmış.]
+::
+
+=== Eski dil
+
+::tablo
+Kelime | Anlam | Not
+`ardh` | toprak | kök
+`vel` | su | /ön ek/ olarak da kullanılır
+`vel'ardh` | su toprağı, liman | {gri: halk dilinde}
+::
+
+=== Harita
+
+::harita kuzey
+Burası ileride kendi bloğu olacak: Kuzey Limanı'nın haritası.
+::
+
+== Yapım notları
+
+Bölümlerin sırası:
++ Varış
++ Fener
++ Ayrılış
+  - belki iki parçaya bölünür
+  - ya da çekmeceye gider
+
+[x] Liman sahnesi
+[~] Bekçinin adı
+[ ] Fenerin hikâyesi
+[-] Yağmur sahnesi
+
+---
+
+Kaynaklar: [[Kuzey Limanı notları]] ve [[eski harita | https://ornek.com/harita]]. Ayrıca bkz. https://ornek.com
+Dosya adları `snake_case` yazılıyor; \*yıldızlar\* olduğu gibi kalır. ;; bu kısım görünmez
+
+::kod js
+// Godot tarafı sahneleri JSON'dan böyle okuyacak
+const sahne = belge.sahneler.liman;
+::
+
+#taslak #liman @Ece @Bekçi

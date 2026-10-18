@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <!-- Fener: ince mürekkep çizgisi, kâğıt rengi zemin -->
+  <rect width="320" height="200" fill="#f6f4ee"/>
+  <g fill="none" stroke="#1d2433" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 170 Q40 162 80 170 T160 170 T240 170 T320 170"/>
+    <path d="M0 184 Q40 176 80 184 T160 184 T240 184 T320 184" stroke-opacity="0.5"/>
+    <path d="M140 168 L148 70 L172 70 L180 168 Z"/>
+    <path d="M144 120 L176 120 M146 95 L174 95 M142 145 L178 145" stroke-opacity="0.6"/>
+    <rect x="146" y="50" width="28" height="20"/>
+    <path d="M142 50 L160 34 L178 50 Z"/>
+    <path d="M160 34 L160 26"/>
+  </g>
+  <g stroke="#2a4a8a" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.7">
+    <path d="M178 58 L300 30 M178 62 L300 86"/>
+    <path d="M142 58 L20 30 M142 62 L20 86" stroke-opacity="0.35"/>
+  </g>
+  <circle cx="160" cy="60" r="5" fill="#2a4a8a"/>
+</svg>

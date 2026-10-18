@@ -1,0 +1,16 @@
+;; Liman Gecesi'nin karakterleri.
+;; Ana belgeye ![[karakterler.mrk]] satırıyla dahil edilir.
+
+::sütunlar
+::kişi Ece
+yaş: 24
+memleket: Kuzey limanları
+Denizden korkar ama bunu kimseye söylemez.
+::
+||
+::kişi Bekçi
+yaş: bilinmiyor
+görev: fener bekçisi
+Fenerin kırk yıllık bekçisi. Adını kimse bilmiyor.
+::
+::
