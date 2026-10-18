@@ -14,6 +14,12 @@
   "line_padding_top": 2,
   "line_padding_bottom": 2,
 
+  // Önizleme: .mrk dosyası açılınca sağda kendiliğinden açılsın mı, hangi modda başlasın
+  "murekkep_onizleme_otomatik": true,
+  "murekkep_onizleme_mod": "temiz",
+  // node komutu bulunamazsa tam yolunu yaz: "C:/Program Files/nodejs/node.exe"
+  "murekkep_node": "node",
+
   "tab_size": 2,
   "translate_tabs_to_spaces": true,
   "font_options": ["no_calt", "no_liga"]

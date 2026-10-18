@@ -1,0 +1,8 @@
+[
+  { "caption": "Mürekkep: Önizlemeyi aç / kapat", "command": "murekkep_onizleme" },
+  { "caption": "Mürekkep: Temiz okuma / çalışma modu", "command": "murekkep_mod" },
+  { "caption": "Mürekkep: Tarayıcıda aç", "command": "murekkep_tarayicida_ac" },
+  { "caption": "Mürekkep: Kontrol", "command": "murekkep_derle", "args": { "secenek": "Kontrol" } },
+  { "caption": "Mürekkep: İstatistik", "command": "murekkep_derle", "args": { "secenek": "İstatistik" } },
+  { "caption": "Mürekkep: JSON üret", "command": "murekkep_derle", "args": { "secenek": "JSON" } }
+]
