@@ -14,6 +14,13 @@
   --soru: #f3cfc4;
   --soru-yazi: #7a2412;
   --kutu: #ece8dd;
+  --r-kirmizi: #b3261e;
+  --r-turuncu: #b85c00;
+  --r-sari: #8a6d00;
+  --r-yesil: #2e7d32;
+  --r-mavi: #1f5fbf;
+  --r-mor: #7b3fa0;
+  --r-gri: #6b7080;
   --yazi: "Literata", "Georgia", "Times New Roman", serif;
   --kod: "JetBrains Mono", "Consolas", monospace;
 }
@@ -30,6 +37,13 @@
     --soru: #4d2219;
     --soru-yazi: #f3cfc4;
     --kutu: #1d212b;
+    --r-kirmizi: #f28b82;
+    --r-turuncu: #f6ae6b;
+    --r-sari: #e8d06a;
+    --r-yesil: #81c995;
+    --r-mavi: #8ab4f8;
+    --r-mor: #d7aefb;
+    --r-gri: #9aa0ab;
     color-scheme: dark;
   }
 }
@@ -114,4 +128,47 @@ body {
 .mrk-kenar { display: inline-block; font-family: system-ui, sans-serif; font-size: 0.72em; line-height: 1.4; padding: 0.1em 0.5em; border-radius: 3px; margin-left: 0.5em; background: var(--not); color: var(--not-yazi); }
 .mrk-kenar-soru { background: var(--soru); color: var(--soru-yazi); }
 .mrk-kenar-soru::before { content: "? "; font-weight: 700; }
+.mrk-cekmece { background: transparent; border: 1.5px dashed var(--cizgi); color: var(--soluk); }
+.mrk-ozet { font-style: italic; color: var(--soluk); font-size: 0.92em; margin: -0.3em 0 1.2em; }
+.mrk-ozet > :first-child::before { content: "özet · "; font-style: normal; font-family: system-ui, sans-serif; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; }
+.mrk-ozet p { margin: 0; }
+.mrk-bayrak { margin: 0.3em 0; }
+.mrk-bayrak code { color: var(--soluk); font-size: 0.75em; }
+.mrk-kosul { font-family: var(--kod); font-size: 0.75em; color: var(--soru-yazi); }
+.mrk-sahne-adi { font-family: var(--kod); text-transform: none; letter-spacing: 0; color: var(--lacivert); margin-right: 0.8em; }
+
+/* Renkler, anlam notu, matematik */
+.mrk-renk-kırmızı { color: var(--r-kirmizi); }
+.mrk-renk-turuncu { color: var(--r-turuncu); }
+.mrk-renk-sarı { color: var(--r-sari); }
+.mrk-renk-yeşil { color: var(--r-yesil); }
+.mrk-renk-mavi { color: var(--r-mavi); }
+.mrk-renk-mor { color: var(--r-mor); }
+.mrk-renk-gri { color: var(--r-gri); }
+.mrk-anlam rt { font-family: system-ui, sans-serif; font-size: 0.5em; color: var(--soluk); letter-spacing: 0.02em; }
+.mrk-matematik-blok { margin: 1.4em 0; overflow-x: auto; text-align: center; }
+.mrk-matematik-blok math { font-size: 1.15em; }
+.mrk-matematik-cig { color: var(--soluk); }
+
+/* Karakter kartı */
+.mrk-kisi-karti { border: 1px solid var(--cizgi); border-radius: 6px; padding: 0.9em 1.1em; margin: 1.5em 0; font-size: 0.95em; }
+.mrk-kisi-adi { font-variant: small-caps; letter-spacing: 0.05em; font-weight: 600; font-size: 1.1em; margin-bottom: 0.4em; }
+.mrk-kisi-karti dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.15em 1em; margin: 0 0 0.6em; font-size: 0.9em; }
+.mrk-kisi-karti dt { color: var(--soluk); }
+.mrk-kisi-karti dd { margin: 0; }
+.mrk-kisi-karti > p:last-child { margin-bottom: 0; }
+
+/* Zaman çizelgesi */
+.mrk-zaman { list-style: none; padding: 0; margin: 1.5em 0; border-left: 1.5px solid var(--cizgi); }
+.mrk-zaman li { position: relative; display: grid; grid-template-columns: minmax(4em, max-content) 1fr; gap: 1em; padding: 0.25em 0 0.25em 1.2em; }
+.mrk-zaman li::before { content: ""; position: absolute; left: -5px; top: 0.85em; width: 8px; height: 8px; border-radius: 50%; background: var(--kagit); border: 1.5px solid var(--lacivert); }
+.mrk-zaman-tarih { font-variant-numeric: tabular-nums; color: var(--lacivert); font-size: 0.9em; padding-top: 0.1em; }
+
+/* Sütunlar */
+.mrk-sutunlar { display: grid; grid-template-columns: repeat(var(--sutun, 2), minmax(0, 1fr)); gap: 2em; margin: 1.5em 0; }
+.mrk-sutun > :first-child { margin-top: 0; }
+@media (max-width: 600px) { .mrk-sutunlar { grid-template-columns: minmax(0, 1fr); gap: 0.5em; } }
+
+.mrk-dahil-hata { font-family: var(--kod); font-size: 0.8em; color: var(--soru-yazi); background: var(--soru); padding: 0.4em 0.8em; border-radius: 4px; margin: 1em 0; }
+
 .mrk-durum { font-family: system-ui, sans-serif; font-size: 0.4em; font-weight: 500; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.2em 0.6em; border: 1px solid currentColor; border-radius: 99px; color: var(--soluk); }

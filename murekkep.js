@@ -1,4 +1,4 @@
-// Mürekkep, sürüm 0.1
+// Mürekkep, sürüm 0.2
 //
 // İki aşamada çalışır:
 //   1. Blok aşaması: metni satır satır okur, her satırın ne olduğuna karar verir
@@ -17,7 +17,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const SURUM = '0.1';
+  const SURUM = '0.2';
 
   // ------------------------------------------------------------------
   // Yardımcılar
@@ -265,7 +265,7 @@
         const m = eslesBurada(DEGISKEN_Y, s, i);
         if (m) {
           bosalt();
-          cikti.push({ tur: 'degisken', ad: m[1] });
+          cikti.push({ tur: 'degisken', ad: m[1], satir: durum.satir });
           i += m[0].length;
           continue;
         }
@@ -287,6 +287,46 @@
             i = j + 1;
             continue;
           }
+
+          // {kırmızı: metin} renk
+          const r = /^([\p{L}][\p{L}\p{N}_-]*):\s/u.exec(s.slice(i + 1, j));
+          if (r) {
+            bosalt();
+            const [a, b] = kirp(s, i + 1 + r[0].length, j);
+            cikti.push({ tur: 'renk', renk: r[1], icerik: satirIci(s, durum, a, b) });
+            i = j + 1;
+            continue;
+          }
+
+          // {kelime = anlam} anlam notu
+          const esitler = ustDuzeyBol(s, i + 1, j, '=');
+          if (esitler.length === 2) {
+            const [a, b] = kirp(s, esitler[0][0], esitler[0][1]);
+            const [c2, d2] = kirp(s, esitler[1][0], esitler[1][1]);
+            if (a < b && c2 < d2) {
+              bosalt();
+              cikti.push({ tur: 'anlam', icerik: satirIci(s, durum, a, b), anlam: s.slice(c2, d2) });
+              i = j + 1;
+              continue;
+            }
+          }
+        }
+      }
+
+      // $matematik$: önünde harf olmayan $ açar, arkasında harf olmayan $ kapatır
+      if (c === '$' && !harfMi(once) && !boslukMu(s[i + 1]) && s[i + 1] !== '$') {
+        let k = i + 1;
+        let j = -1;
+        while (k < son) {
+          if (s[k] === '\\') { k += 2; continue; }
+          if (s[k] === '$' && !boslukMu(s[k - 1]) && !harfMi(s[k + 1])) { j = k; break; }
+          k++;
+        }
+        if (j !== -1) {
+          bosalt();
+          cikti.push({ tur: 'matematik', deger: s.slice(i + 1, j) });
+          i = j + 1;
+          continue;
         }
       }
 
@@ -359,8 +399,49 @@
     return Math.floor(n / 2);
   }
 
+  // Yol yardımcıları (dahil etme için). Her zaman "/" kullanılır.
+  function dizin(yol) {
+    const i = yol.lastIndexOf('/');
+    return i === -1 ? '' : yol.slice(0, i);
+  }
+
+  function yolBirlestir(taban, goreli) {
+    const tam = (taban ? taban + '/' + goreli : goreli).replace(/\\/g, '/');
+    const sonuc = [];
+    for (const p of tam.split('/')) {
+      if (p === '' || p === '.') continue;
+      if (p === '..') sonuc.pop();
+      else sonuc.push(p);
+    }
+    return (tam.startsWith('/') ? '/' : '') + sonuc.join('/');
+  }
+
+  // ![[dosya.mrk]] satırını okur: dosyayı bulur, ayrıştırır, çocuklarını döndürür.
+  function dahilEt(kaynak, durum, no) {
+    const yol = yolBirlestir(dizin(durum.dosya || ''), kaynak);
+    const dugum = { tur: 'dahil', kaynak, yol, satir: no };
+    if (!durum.dahilOku) { dugum.hata = 'okunamıyor'; return dugum; }
+    if (durum.yigin.includes(yol) || durum.yigin.length > 32) { dugum.hata = 'döngü'; return dugum; }
+
+    const metin = durum.dahilOku(yol);
+    if (metin === null || metin === undefined) { dugum.hata = 'bulunamadı'; return dugum; }
+
+    // Dahil edilen dosyayı aynı durumla okuruz: dipnotlar, karakterler, meta birleşir.
+    const eskiDosya = durum.dosya;
+    durum.yigin.push(yol);
+    durum.dahilDerinlik++;
+    durum.dosya = yol;
+    const satirlar = String(metin).replace(/\r\n?/g, '\n').split('\n');
+    dugum.cocuklar = bloklariOku({ satirlar, i: 0, ofset: 0 }, durum, 0);
+    durum.dosya = eskiDosya;
+    durum.dahilDerinlik--;
+    durum.yigin.pop();
+    return dugum;
+  }
+
   // Okuyucu: satırlar ve şu an hangi satırda olduğumuz. Bloklar iç içe okunurken
   // hepsi aynı okuyucuyu paylaşır, böylece biri bir satırı tükettiğinde diğeri bilir.
+  // ofset: okuyucu bir dosyanın ortasından başlıyorsa (sütunlar) gerçek satır numarası için.
   function bloklariOku(o, durum, derinlik) {
     const cikti = [];
 
@@ -379,12 +460,20 @@
       const satir = o.satirlar[o.i].replace(/\s+$/, '');
       const duz = satir.trim();
       // Satır numarası (1'den başlar). Editör bununla kaynağa geri döner.
-      const no = o.i + 1;
+      const no = o.i + 1 + (o.ofset || 0);
       durum.satir = no;
       let m;
 
       // Boş satır: açık grupları kapatır
       if (duz === '') { kapat(); o.i++; continue; }
+
+      // ![[dosya.mrk]] tek başına: başka bir dosyayı buraya dahil eder
+      if ((m = /^!\[\[\s*([^\]|]+?\.mrk)\s*(?:\|[^\]]*)?\]\]$/u.exec(duz))) {
+        kapat();
+        o.i++;
+        cikti.push(dahilEt(m[1], durum, no));
+        continue;
+      }
 
       // ;; yorum satırı: hiçbir şey yapmaz, grubu da bozmaz
       if (duz.startsWith(';;')) { o.i++; continue; }
@@ -453,14 +542,27 @@
         continue;
       }
 
-      // -> seçenek => hedef
-      if ((m = /^->\s*(.*?)(?:\s+=>\s*(\S+))?$/.exec(duz))) {
+      // -> seçenek => hedef ?koşul ?!koşul
+      if ((m = /^->\s*(.*?)(?:\s+=>\s*([^\s?]+))?((?:\s+\?!?[\p{L}\p{N}_-]+)*)\s*$/u.exec(duz))) {
         if (!secimler) {
           kapat();
           secimler = { tur: 'secimler', ogeler: [], satir: no };
           cikti.push(secimler);
         }
-        secimler.ogeler.push({ icerik: satirIci(m[1], durum), hedef: m[2] || null, satir: no });
+        const kosullar = m[3]
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((k) => ({ ad: k.replace(/^\?!?/, ''), degil: k.startsWith('?!') }));
+        secimler.ogeler.push({ icerik: satirIci(m[1], durum), hedef: m[2] || null, kosullar, satir: no });
+        o.i++;
+        continue;
+      }
+
+      // $bayrak ya da $ad = değer. Satırda başka $ varsa matematiktir, bayrak değil.
+      if ((m = /^\$([\p{L}\p{N}_-]+)(?:\s*=\s*(.*))?$/u.exec(duz)) && !(m[2] || '').includes('$')) {
+        kapat();
+        cikti.push({ tur: 'bayrak', ad: m[1], deger: m[2] === undefined ? true : m[2].trim(), satir: no });
         o.i++;
         continue;
       }
@@ -546,7 +648,7 @@
         } else if (icIceSay && /^::[\p{L}\p{N}_-]/u.test(duz)) {
           seviye++;
         }
-        satirlar.push({ metin: satir, no: o.i });
+        satirlar.push({ metin: satir, no: o.i + (o.ofset || 0) });
       }
       return satirlar;
     };
@@ -556,12 +658,69 @@
       return { tur: 'kod', dil: arg || null, metin, satir: no };
     }
 
+    if (ad === 'matematik') {
+      const deger = hamTopla(false).map((s) => s.metin).join('\n').trim();
+      return { tur: 'matematik', blok: true, deger, satir: no };
+    }
+
     if (ad === 'meta') {
       for (const { metin } of hamTopla(false)) {
         const m = /^\s*([^:;][^:]*):\s*(.*)$/.exec(metin);
-        if (m) durum.meta[m[1].trim()] = m[2].trim();
+        if (!m) continue;
+        const anahtar = m[1].trim();
+        // Dahil edilen dosyanın meta'sı ana belgedeki değerleri ezmez
+        if (durum.dahilDerinlik && anahtar in durum.meta) continue;
+        durum.meta[anahtar] = m[2].trim();
       }
       return null; // meta ağaçta düğüm olmaz, belgenin meta alanına gider
+    }
+
+    if (ad === 'zaman') {
+      const olaylar = hamTopla(false)
+        .filter((s) => s.metin.trim() && !s.metin.trim().startsWith(';;'))
+        .map(({ metin, no: satirNo }) => {
+          const s = metin.trim();
+          durum.satir = satirNo;
+          const parcalar = ustDuzeyBol(s, 0, s.length, '|');
+          const [a, b] = parcalar.length > 1 ? kirp(s, parcalar[0][0], parcalar[0][1]) : [0, 0];
+          const [c, d] = kirp(s, parcalar.length > 1 ? parcalar[1][0] : 0, s.length);
+          return { tarih: satirIci(s, durum, a, b), olay: satirIci(s, durum, c, d), satir: satirNo };
+        });
+      return { tur: 'zaman', olaylar, satir: no };
+    }
+
+    if (ad === 'sütunlar' || ad === 'sutunlar') {
+      // Ham satırları al, en üst düzeydeki || satırlarından böl, her parçayı ayrı oku
+      const satirlar = hamTopla(true);
+      const gruplar = [[]];
+      let seviye = 0;
+      for (const s of satirlar) {
+        const duz = s.metin.trim();
+        if (seviye === 0 && duz === '||') { gruplar.push([]); continue; }
+        if (duz === '::') seviye = Math.max(0, seviye - 1);
+        else if (/^::[\p{L}\p{N}_-]/u.test(duz)) seviye++;
+        gruplar[gruplar.length - 1].push(s);
+      }
+      const sutunlar = gruplar.map((g) =>
+        g.length ? bloklariOku({ satirlar: g.map((s) => s.metin), i: 0, ofset: g[0].no - 1 }, durum, 0) : []
+      );
+      return { tur: 'sutunlar', sutunlar, satir: no };
+    }
+
+    if (ad === 'kişi' || ad === 'kisi') {
+      // Baştaki "anahtar: değer" satırları kartın alanları; sonrası serbest metin
+      const alanlar = {};
+      while (o.i < o.satirlar.length) {
+        const m = /^\s*([\p{L}][\p{L}\p{N} _-]{0,30}?):\s+(.+)$/u.exec(o.satirlar[o.i]);
+        if (!m) break;
+        alanlar[m[1].trim()] = m[2].trim();
+        o.i++;
+      }
+      const kisiAdi = (arg || '').trim();
+      const dugum = { tur: 'blok', ad: 'kişi', arg: kisiAdi || null, alanlar, satir: no };
+      dugum.cocuklar = bloklariOku(o, durum, derinlik + 1);
+      if (kisiAdi) durum.kisiler[kisiAdi] = { alanlar, satir: no, dosya: durum.dosya || null };
+      return dugum;
     }
 
     if (ad === 'tablo') {
@@ -584,23 +743,59 @@
       };
     }
 
-    // Diğer bütün bloklar (not, uyarı, gizli, sahne ve tanınmayanlar): içi yine Mürekkep
-    return {
+    // Sahne: "ad: tarif", sadece "ad" ya da sadece "tarif"
+    let kimlik;
+    if (ad === 'sahne' && arg) {
+      const k = /^([\p{L}\p{N}_-]+)\s*:\s*(.*)$/u.exec(arg);
+      if (k) {
+        kimlik = k[1];
+        arg = k[2];
+      } else if (/^[\p{L}\p{N}_-]+$/u.test(arg)) {
+        kimlik = arg;
+        arg = '';
+      }
+    }
+
+    // Diğer bütün bloklar (not, uyarı, gizli, sahne, çekmece, özet ve tanınmayanlar): içi yine Mürekkep
+    const dugum = {
       tur: 'blok',
       ad,
       arg: arg || null,
       argIcerik: arg ? satirIci(arg, durum) : null,
       satir: no,
-      cocuklar: bloklariOku(o, durum, derinlik + 1),
     };
+    if (kimlik) dugum.kimlik = kimlik;
+    dugum.cocuklar = bloklariOku(o, durum, derinlik + 1);
+    return dugum;
   }
 
   // Ana giriş noktası: metni ağaca çevirir.
-  function ayristir(metin) {
+  // ayar.dosya: bu metnin dosya yolu (dahil etmede göreli yollar buna göre çözülür)
+  // ayar.dahilOku: (yol) => metin | null. Verilmezse ![[x.mrk]] satırları "okunamıyor" olur.
+  function ayristir(metin, ayar = {}) {
     const satirlar = String(metin).replace(/\r\n?/g, '\n').split('\n');
-    const durum = { meta: {}, dipnotlar: [], satir: 0, altSayac: 0 };
-    const cocuklar = bloklariOku({ satirlar, i: 0 }, durum, 0);
-    return { tur: 'belge', surum: SURUM, meta: durum.meta, cocuklar, dipnotlar: durum.dipnotlar };
+    const durum = {
+      meta: {},
+      dipnotlar: [],
+      kisiler: {},
+      satir: 0,
+      altSayac: 0,
+      dosya: ayar.dosya ? ayar.dosya.replace(/\\/g, '/') : '',
+      dahilOku: ayar.dahilOku || null,
+      yigin: [],
+      dahilDerinlik: 0,
+    };
+    if (durum.dosya) durum.yigin.push(durum.dosya);
+    const cocuklar = bloklariOku({ satirlar, i: 0, ofset: 0 }, durum, 0);
+    durum.yigin = [];
+    return {
+      tur: 'belge',
+      surum: SURUM,
+      meta: durum.meta,
+      cocuklar,
+      dipnotlar: durum.dipnotlar,
+      kisiler: durum.kisiler,
+    };
   }
 
   // ------------------------------------------------------------------
@@ -638,13 +833,22 @@
   // ayar.icBaglanti: [[not]] hedefini adrese çeviren fonksiyon
   // ayar.bloklar: { ad: (dugum, icHTML, argHTML) => html } — kendi blok türlerin için
   // ayar.konum: true ise bloklara data-satir yazılır (editör kaydırma için kullanır)
+  // ayar.matematik: (tex, blokMu) => html — formülleri çizen fonksiyon (ör. KaTeX)
+  // ayar.degiskenler: { ad: değer } — meta'nın üstüne yazılır (oynat modunda bayraklar için)
   function html(belge, ayar = {}) {
     const calisma = ayar.mod === 'calisma';
-    const konum = !!ayar.konum;
+    let konum = !!ayar.konum;
     const icBaglanti = ayar.icBaglanti || ((hedef) => encodeURI(hedef));
     const ozelBloklar = ayar.bloklar || {};
-    const meta = belge.meta;
+    const meta = Object.assign({}, belge.meta, ayar.degiskenler || {});
     const kullanilanKimlikler = new Map();
+
+    const matematikHTML = (tex, blok) => {
+      if (ayar.matematik) {
+        try { return ayar.matematik(tex, blok); } catch (e) { /* aşağıdaki çiğ hale düş */ }
+      }
+      return `<code class="mrk-matematik-cig">${kac(tex)}</code>`;
+    };
 
     const satirIciHTML = (dugumler) => dugumler.map(dugumHTML).join('');
 
@@ -665,12 +869,17 @@
           return `<a class="mrk-ic" href="${kac(icBaglanti(d.hedef))}" data-hedef="${kac(d.hedef)}">${kac(d.yazi)}</a>`;
         case 'gorsel': return `<img class="mrk-gorsel" src="${kac(d.kaynak)}" alt="${kac(d.aciklama)}">`;
         case 'etiket': return `<span class="mrk-etiket">#${kac(d.ad)}</span>`;
-        case 'kisi': return `<span class="mrk-kisi">@${kac(d.ad)}</span>`;
+        case 'kisi': return `<span class="mrk-kisi" data-kisi="${kac(d.ad)}">@${kac(d.ad)}</span>`;
+        case 'renk': return `<span class="mrk-renk mrk-renk-${kac(kimlik(d.renk))}">${satirIciHTML(d.icerik)}</span>`;
+        case 'anlam':
+          return `<ruby class="mrk-anlam">${satirIciHTML(d.icerik)}<rp> (</rp><rt>${kac(d.anlam)}</rt><rp>)</rp></ruby>`;
+        case 'matematik': return `<span class="mrk-matematik">${matematikHTML(d.deger, false)}</span>`;
         case 'dipnot':
           return `<sup class="mrk-dn"><a href="#mrk-dn-${d.no}" id="mrk-dnr-${d.no}">${d.no}</a></sup>`;
         case 'degisken':
-          if (meta[d.ad] !== undefined) return kac(meta[d.ad]);
-          return `<span class="mrk-eksik" title="meta'da yok">{$${kac(d.ad)}}</span>`;
+          if (meta[d.ad] !== undefined && meta[d.ad] !== true) return kac(meta[d.ad]);
+          if (meta[d.ad] === true) return '';
+          return `<span class="mrk-eksik" title="tanımlı değil">{$${kac(d.ad)}}</span>`;
         case 'alternatif': {
           const ilk = satirIciHTML(d.secenekler[0]);
           if (!calisma) return ilk;
@@ -735,17 +944,52 @@
         case 'liste': return listeHTML(d);
         case 'ayrac': return '<hr>';
         case 'replik':
-          return `<p class="mrk-replik"><span class="mrk-konusan">${kac(d.kisi)}</span> <span class="mrk-soz">${satirIciHTML(d.icerik)}</span></p>`;
+          return `<p class="mrk-replik"><span class="mrk-konusan" data-kisi="${kac(d.kisi)}">${kac(d.kisi)}</span> <span class="mrk-soz">${satirIciHTML(d.icerik)}</span></p>`;
         case 'dusunce': return `<p class="mrk-dusunce">${satirIciHTML(d.icerik)}</p>`;
         case 'yon': return `<p class="mrk-yon">${satirIciHTML(d.icerik)}</p>`;
         case 'secimler': {
           const ogeler = d.ogeler
             .map((s) => {
               const hedef = calisma && s.hedef ? ` <span class="mrk-hedef">${kac(s.hedef)}</span>` : '';
-              return `<li>${satirIciHTML(s.icerik)}${hedef}</li>`;
+              const kosul = calisma
+                ? (s.kosullar || []).map((k) => ` <span class="mrk-kosul">?${k.degil ? '!' : ''}${kac(k.ad)}</span>`).join('')
+                : '';
+              return `<li>${satirIciHTML(s.icerik)}${hedef}${kosul}</li>`;
             })
             .join('');
           return `<ul class="mrk-secimler">${ogeler}</ul>`;
+        }
+        case 'bayrak': {
+          if (!calisma) return '';
+          const deger = d.deger === true ? '' : ` = ${kac(d.deger)}`;
+          return `<p class="mrk-bayrak"><code>$${kac(d.ad)}${deger}</code></p>`;
+        }
+        case 'matematik': return `<div class="mrk-matematik-blok">${matematikHTML(d.deger, true)}</div>`;
+        case 'zaman': {
+          const olaylar = d.olaylar
+            .map(
+              (o) =>
+                `<li><span class="mrk-zaman-tarih">${satirIciHTML(o.tarih)}</span><span class="mrk-zaman-olay">${satirIciHTML(o.olay)}</span></li>`
+            )
+            .join('');
+          return `<ol class="mrk-zaman">${olaylar}</ol>`;
+        }
+        case 'sutunlar': {
+          const sutunlar = d.sutunlar
+            .map((s) => `<div class="mrk-sutun">${s.map(blokHTML).filter(Boolean).join('\n')}</div>`)
+            .join('');
+          return `<div class="mrk-sutunlar" style="--sutun:${d.sutunlar.length}">${sutunlar}</div>`;
+        }
+        case 'dahil': {
+          if (d.hata) {
+            return `<div class="mrk-dahil-hata">${kac(d.kaynak)}: ${kac(d.hata)}</div>`;
+          }
+          // Dahil edilen dosyanın satır numaraları o dosyaya ait; karışmasın diye yazılmaz
+          const eski = konum;
+          konum = false;
+          const ic = d.cocuklar.map(blokHTML).filter(Boolean).join('\n');
+          konum = eski;
+          return `<div class="mrk-dahil" data-dosya="${kac(d.yol)}">${ic}</div>`;
         }
         case 'kod': {
           const dil = d.dil ? ` data-dil="${kac(d.dil)}"` : '';
@@ -759,15 +1003,32 @@
           return `<div class="mrk-tablo"><table><thead><tr>${bas}</tr></thead><tbody>${govde}</tbody></table></div>`;
         }
         case 'blok': {
-          const ic = d.cocuklar.map(blokHTML).join('\n');
+          // Çekmece ve özet çalışma notudur, temiz okumada hiç görünmez
+          if (!calisma && (d.ad === 'çekmece' || d.ad === 'özet')) return '';
+          const ic = d.cocuklar.map(blokHTML).filter(Boolean).join('\n');
           const arg = d.argIcerik ? satirIciHTML(d.argIcerik) : '';
           if (ozelBloklar[d.ad]) return ozelBloklar[d.ad](d, ic, arg);
           if (d.ad === 'gizli') {
             return `<details class="mrk-gizli"><summary>${arg || 'Gizli'}</summary>${ic}</details>`;
           }
           if (d.ad === 'sahne') {
-            const yer = arg ? `<header class="mrk-sahne-yer">${arg}</header>` : '';
-            return `<section class="mrk-sahne">${yer}${ic}</section>`;
+            const ad = calisma && d.kimlik ? `<span class="mrk-sahne-adi">${kac(d.kimlik)}</span>` : '';
+            const yer = arg || ad ? `<header class="mrk-sahne-yer">${ad}${arg}</header>` : '';
+            const kimlikAttr = d.kimlik ? ` id="sahne-${kac(d.kimlik)}" data-sahne="${kac(d.kimlik)}"` : '';
+            return `<section class="mrk-sahne"${kimlikAttr}>${yer}${ic}</section>`;
+          }
+          if (d.ad === 'kişi') {
+            const alanlar = Object.entries(d.alanlar || {})
+              .map(([k, v]) => `<dt>${kac(k)}</dt><dd>${kac(v)}</dd>`)
+              .join('');
+            const adi = d.arg ? `<div class="mrk-kisi-adi">${kac(d.arg)}</div>` : '';
+            return `<aside class="mrk-kisi-karti" data-kisi="${kac(d.arg || '')}">${adi}${alanlar ? `<dl>${alanlar}</dl>` : ''}${ic}</aside>`;
+          }
+          if (d.ad === 'çekmece') {
+            return `<div class="mrk-blok mrk-cekmece"><div class="mrk-blok-baslik">çekmece</div>${ic}</div>`;
+          }
+          if (d.ad === 'özet') {
+            return `<div class="mrk-ozet">${ic}</div>`;
           }
           const baslik = arg ? `<div class="mrk-blok-baslik">${arg}</div>` : '';
           return `<div class="mrk-blok mrk-blok-${kac(kimlik(d.ad))}" data-blok="${kac(d.ad)}">${baslik}${ic}</div>`;
@@ -811,6 +1072,8 @@
       bosluklar: 0,
       cizikler: 0,
       alternatifler: 0,
+      cekmeceler: 0,
+      son: belge.meta.son || null,
       bolumler: [],
     };
 
@@ -842,6 +1105,17 @@
         case 'baslik':
           sonuc.bolumler.push({ seviye: x.seviye, metin: duzMetin(x.icerik, belge.meta), durum: x.durum });
           break;
+        case 'matematik':
+        case 'bayrak':
+          return;
+        case 'blok':
+          // Çekmece, özet ve karakter kartları metnin parçası değil, kelime sayısına girmez
+          if (x.ad === 'çekmece') sonuc.cekmeceler++;
+          if (x.ad === 'çekmece' || x.ad === 'özet' || x.ad === 'kişi') {
+            gez(x.cocuklar, false);
+            return;
+          }
+          break;
       }
       for (const anahtar in x) {
         if (anahtar !== 'meta' && !KONUM_ALANLARI.has(anahtar)) gez(x[anahtar], sayilir);
@@ -853,5 +1127,70 @@
     return sonuc;
   }
 
-  return { surum: SURUM, ayristir, html, json, istatistik };
+  // ------------------------------------------------------------------
+  // Kontrol: kopuk seçenekler, tanımsız bayraklar ve değişkenler
+  // ------------------------------------------------------------------
+
+  // Belgedeki sahneleri adlarıyla döndürür (dahil edilen dosyalardakiler de).
+  function sahneler(belge) {
+    const harita = new Map();
+    gezAgac(belge.cocuklar, (d) => {
+      if (d.tur === 'blok' && d.ad === 'sahne' && d.kimlik && !harita.has(d.kimlik)) harita.set(d.kimlik, d);
+    });
+    return harita;
+  }
+
+  // Ağacı gezer; ziyaret(dugum, dosya). dosya: düğüm dahil edilen bir dosyadaysa onun yolu.
+  function gezAgac(x, ziyaret, dosya = null) {
+    if (Array.isArray(x)) { for (const y of x) gezAgac(y, ziyaret, dosya); return; }
+    if (!x || typeof x !== 'object') return;
+    if (x.tur) ziyaret(x, dosya);
+    for (const anahtar in x) {
+      if (anahtar === 'meta' || anahtar === 'kisiler' || KONUM_ALANLARI.has(anahtar)) continue;
+      gezAgac(x[anahtar], ziyaret, x.tur === 'dahil' ? x.yol : dosya);
+    }
+  }
+
+  function kontrol(belge) {
+    const uyarilar = [];
+    const sahneYerleri = new Map(); // ad -> [{ satir, dosya }]
+    const tanimlilar = new Set(Object.keys(belge.meta));
+    const secenekler = [];
+    const degiskenler = [];
+
+    const ziyaret = (d, dosya) => {
+      if (d.tur === 'dahil' && d.hata) uyarilar.push({ satir: d.satir, dosya, mesaj: `${d.kaynak}: ${d.hata}` });
+      else if (d.tur === 'blok' && d.ad === 'sahne' && d.kimlik) {
+        if (!sahneYerleri.has(d.kimlik)) sahneYerleri.set(d.kimlik, []);
+        sahneYerleri.get(d.kimlik).push({ satir: d.satir, dosya });
+      } else if (d.tur === 'bayrak') tanimlilar.add(d.ad);
+      else if (d.tur === 'secimler') d.ogeler.forEach((o) => secenekler.push({ o, dosya }));
+      else if (d.tur === 'degisken') degiskenler.push({ d, dosya });
+    };
+    gezAgac(belge.cocuklar, ziyaret);
+    gezAgac(belge.dipnotlar, ziyaret);
+
+    for (const [ad, yerler] of sahneYerleri) {
+      if (yerler.length > 1) {
+        for (const y of yerler) uyarilar.push({ ...y, mesaj: `"${ad}" adında birden fazla sahne var` });
+      }
+    }
+    for (const { o, dosya } of secenekler) {
+      if (o.hedef && !sahneYerleri.has(o.hedef)) {
+        uyarilar.push({ satir: o.satir, dosya, mesaj: `"${o.hedef}" adında bir sahne yok` });
+      }
+      for (const k of o.kosullar || []) {
+        if (!tanimlilar.has(k.ad)) uyarilar.push({ satir: o.satir, dosya, mesaj: `"${k.ad}" bayrağı hiçbir yerde konmuyor` });
+      }
+    }
+    for (const { d, dosya } of degiskenler) {
+      if (!tanimlilar.has(d.ad)) uyarilar.push({ satir: d.satir, dosya, mesaj: `{$${d.ad}} tanımlı değil` });
+    }
+
+    // Önce ana dosya, sonra satır sırası
+    uyarilar.sort((a, b) => (a.dosya || '').localeCompare(b.dosya || '') || a.satir - b.satir);
+    return uyarilar;
+  }
+
+  return { surum: SURUM, ayristir, html, json, istatistik, kontrol, sahneler, gez: gezAgac };
 });

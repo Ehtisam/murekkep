@@ -79,7 +79,7 @@ test('etiket ve kişi, e-posta değil', () => {
 });
 
 test('değişken', () => {
-  assert.strictEqual(temiz('::meta\nad: Ece\n::\nSelam {$ad}, {$yok}'), '<article class="mrk mrk-temiz">\n<p>Selam Ece, <span class="mrk-eksik" title="meta\'da yok">{$yok}</span></p>\n</article>');
+  assert.strictEqual(temiz('::meta\nad: Ece\n::\nSelam {$ad}, {$yok}'), '<article class="mrk mrk-temiz">\n<p>Selam Ece, <span class="mrk-eksik" title="tanımlı değil">{$yok}</span></p>\n</article>');
 });
 
 test('dipnot', () => {
@@ -212,6 +212,137 @@ test('JSON konum alanlarını varsayılan olarak atar', () => {
 
 test('html konum seçeneği', () => {
   assert.ok(M.html(M.ayristir('\n= B'), { konum: true }).includes('<h1 data-satir="2"'));
+});
+
+// --- Sürüm 0.2 ---
+
+test('renk ve anlam notu', () => {
+  const d = satir('{kırmızı: *dikkat*} ve {ardh = toprak}');
+  assert.strictEqual(d[0].tur, 'renk');
+  assert.strictEqual(d[0].renk, 'kırmızı');
+  assert.strictEqual(d[0].icerik[0].tur, 'kalin');
+  assert.deepStrictEqual(d[2], { tur: 'anlam', icerik: [{ tur: 'metin', deger: 'ardh' }], anlam: 'toprak' });
+  assert.ok(temiz('{ardh = toprak}').includes('<ruby class="mrk-anlam">ardh<rp> (</rp><rt>toprak</rt>'));
+});
+
+test('süslü parantez öncelikleri', () => {
+  assert.strictEqual(satir('{a = b | c}')[0].tur, 'alternatif'); // | önce gelir
+  assert.deepStrictEqual(turler(satir('{böyle}')), ['metin']);
+  assert.deepStrictEqual(turler(satir('{a = b = c}')), ['metin']);
+});
+
+test('satır içi matematik', () => {
+  assert.deepStrictEqual(satir('formül: $x^2 + 1$.')[1], { tur: 'matematik', deger: 'x^2 + 1' });
+  assert.deepStrictEqual(turler(satir('fiyat 50$ ve 30$')), ['metin']);
+  assert.deepStrictEqual(turler(satir('$5 ile $6 arası')), ['metin']);
+});
+
+test('matematik bloğu ve çizici', () => {
+  const b = M.ayristir('::matematik\n\\frac{1}{2}\n::');
+  assert.deepStrictEqual(sade('::matematik\n\\frac{1}{2}\n::').cocuklar[0], { tur: 'matematik', blok: true, deger: '\\frac{1}{2}' });
+  const h = M.html(b, { matematik: (tex, blok) => `[${blok ? 'B' : 'S'}:${tex}]` });
+  assert.ok(h.includes('[B:\\frac{1}{2}]'));
+  assert.ok(temiz('$x$').includes('mrk-matematik-cig'));
+});
+
+test('bayrak satırı', () => {
+  const b = sade('$anahtar\n$altın = 5\n$E = mc^2$');
+  assert.deepStrictEqual(b.cocuklar[0], { tur: 'bayrak', ad: 'anahtar', deger: true });
+  assert.deepStrictEqual(b.cocuklar[1], { tur: 'bayrak', ad: 'altın', deger: '5' });
+  assert.strictEqual(b.cocuklar[2].tur, 'paragraf'); // içinde ikinci $ var: matematik
+  assert.ok(!temiz('$anahtar').includes('anahtar'));
+});
+
+test('koşullu seçenek', () => {
+  const o = sade('-> Kapıyı aç => kapi ?anahtar ?!lanet\n-> Bekle ?yorgun').cocuklar[0].ogeler;
+  assert.strictEqual(o[0].hedef, 'kapi');
+  assert.deepStrictEqual(o[0].kosullar, [{ ad: 'anahtar', degil: false }, { ad: 'lanet', degil: true }]);
+  assert.strictEqual(o[1].hedef, null);
+  assert.deepStrictEqual(o[1].kosullar, [{ ad: 'yorgun', degil: false }]);
+  assert.strictEqual(sade('-> Neden ?').cocuklar[0].ogeler[0].icerik[0].deger, 'Neden ?');
+});
+
+test('sahne adı ve tarifi', () => {
+  const [a, b, c] = M.ayristir('::sahne liman: gece, liman\n::\n::sahne fener\n::\n::sahne gece, liman\n::').cocuklar;
+  assert.deepStrictEqual([a.kimlik, a.arg], ['liman', 'gece, liman']);
+  assert.deepStrictEqual([b.kimlik, b.arg], ['fener', null]);
+  assert.deepStrictEqual([c.kimlik, c.arg], [undefined, 'gece, liman']);
+  assert.ok(temiz('::sahne liman: gece\n::').includes('id="sahne-liman"'));
+});
+
+test('çekmece ve özet temizde yok, kelimeye girmez', () => {
+  const metin = 'bir iki\n\n::çekmece\nüç dört beş\n::\n::özet\naltı\n::';
+  assert.ok(!temiz(metin).includes('üç'));
+  assert.ok(!temiz(metin).includes('altı'));
+  assert.ok(calisma(metin).includes('mrk-cekmece'));
+  const ist = M.istatistik(M.ayristir(metin));
+  assert.deepStrictEqual([ist.kelime, ist.cekmeceler], [2, 1]);
+});
+
+test('karakter kartı', () => {
+  const b = M.ayristir('::kişi Ece\nyaş: 24\nmemleket: Kuzey\nDenizden korkar.\n::\n@Ece: Selam');
+  assert.deepStrictEqual(b.kisiler.Ece.alanlar, { yaş: '24', memleket: 'Kuzey' });
+  assert.strictEqual(b.cocuklar[0].cocuklar[0].tur, 'paragraf');
+  const h = temiz('::kişi Ece\nyaş: 24\n::\n@Ece: Selam');
+  assert.ok(h.includes('<aside class="mrk-kisi-karti" data-kisi="Ece">'));
+  assert.ok(h.includes('<span class="mrk-konusan" data-kisi="Ece">'));
+});
+
+test('zaman çizelgesi', () => {
+  const z = sade('::zaman\n412 | Liman kuruldu\n419 | Fener *yandı*\n::').cocuklar[0];
+  assert.strictEqual(z.olaylar.length, 2);
+  assert.strictEqual(z.olaylar[0].tarih[0].deger, '412');
+  assert.strictEqual(z.olaylar[1].olay[1].tur, 'kalin');
+});
+
+test('sütunlar ve satır numaraları', () => {
+  const b = M.ayristir('x\n::sütunlar\nsol\n::not\niç\n||\n::\n||\nsağ\n::\nson');
+  const s = b.cocuklar[1];
+  assert.strictEqual(s.tur, 'sutunlar');
+  assert.strictEqual(s.sutunlar.length, 2); // not bloğunun içindeki || bölmez
+  assert.strictEqual(s.sutunlar[1][0].satir, 9);
+  assert.strictEqual(b.cocuklar[2].satirlar[0][0].deger, 'son');
+});
+
+test('dosya dahil etme', () => {
+  const dosyalar = {
+    'kitap/bolumler/1.mrk': '::meta\nbaşlık: ezilmemeli\nyazar: Ece\n::\n= Bir\n![[../ortak.mrk]]',
+    'kitap/ortak.mrk': '::kişi Ece\n::\n::sahne liman\n::',
+    'kitap/dongu.mrk': '![[dongu.mrk]]',
+  };
+  const oku = (yol) => dosyalar[yol] ?? null;
+  const b = M.ayristir('::meta\nbaşlık: Kitap\n::\n![[bolumler/1.mrk]]\n![[yok.mrk]]\n![[dongu.mrk]]', { dosya: 'kitap/ana.mrk', dahilOku: oku });
+  const [bir, yok, dongu] = b.cocuklar;
+  assert.strictEqual(bir.yol, 'kitap/bolumler/1.mrk');
+  assert.strictEqual(bir.cocuklar[1].cocuklar[0].ad, 'kişi');
+  assert.deepStrictEqual([b.meta['başlık'], b.meta.yazar], ['Kitap', 'Ece']);
+  assert.ok(b.kisiler.Ece);
+  assert.strictEqual(yok.hata, 'bulunamadı');
+  assert.strictEqual(dongu.cocuklar[0].hata, 'döngü');
+  assert.strictEqual(M.ayristir('![[x.mrk]]').cocuklar[0].hata, 'okunamıyor');
+  assert.ok(M.sahneler(b).has('liman'));
+});
+
+test('kontrol uyarıları', () => {
+  const metin = [
+    '::sahne a', '-> git => b', '-> kır => yok ?anahtar', '::',
+    '::sahne b', '$anahtar', '-> aç => a ?anahtar ?hayalet', '::',
+    '::sahne b', '::',
+    '{$tanimsiz} {$anahtar}',
+  ].join('\n');
+  const mesajlar = M.kontrol(M.ayristir(metin)).map((u) => `${u.satir}: ${u.mesaj}`);
+  assert.deepStrictEqual(mesajlar, [
+    '3: "yok" adında bir sahne yok',
+    '5: "b" adında birden fazla sahne var',
+    '7: "hayalet" bayrağı hiçbir yerde konmuyor',
+    '9: "b" adında birden fazla sahne var',
+    '11: {$tanimsiz} tanımlı değil',
+  ]);
+});
+
+test('oynat için değişkenler meta\'nın üstüne yazılır', () => {
+  const b = M.ayristir('::meta\naltın: 0\n::\n{$altın} altın');
+  assert.ok(M.html(b, { degiskenler: { altın: '5' } }).includes('5 altın'));
 });
 
 test('istatistik', () => {

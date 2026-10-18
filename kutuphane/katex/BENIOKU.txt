@@ -1,0 +1,1 @@
+KaTeX 0.16.11 (https://katex.org). MIT lisansı, LICENSE dosyasına bak. Sadece katex.min.js alındı; MathML çıktısı kullanıldığı için stil ve yazı tipi dosyaları gerekmiyor.

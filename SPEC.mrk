@@ -1,6 +1,6 @@
 ::meta
 başlık: Mürekkep
-sürüm: 0.1
+sürüm: 0.2
 uzantı: .mrk
 hedef: 2500
 ::
@@ -115,7 +115,7 @@ Mürekkep diyaloğu bir blok gerektirmeden tanır. Satır başında `@Ad:` varsa
 -> Geri dön    => ev
 ::
 
-`->` bir seçenektir. `=>` işaretinden sonraki kelime seçeneğin gittiği yerin adıdır. JSON çıktısında bunlar oyun motorunun okuyabileceği veri olarak çıkar.
+`->` bir seçenektir. `=>` işaretinden sonraki kelime seçeneğin gittiği sahnenin adıdır. JSON çıktısında bunlar oyun motorunun okuyabileceği veri olarak çıkar. Sahnelerin adı, bayraklar ve koşullar için: *Etkileşimli hikâye* bölümü.
 
 == Satır içi
 
@@ -133,7 +133,34 @@ Yazılış | Anlamı
 `@kişi` | kişi
 `^[dipnot]` | dipnot
 `{$değişken}` | meta'daki değer
+`{kırmızı: metin}` | {kırmızı: renkli yazı}
+`{ardh = toprak}` | {ardh = toprak} (anlam notu)
+`$x^2 + 1$` | $x^2 + 1$ (matematik)
 ::
+
+=== Süslü parantez
+
+Süslü parantez metne iliştirilmiş bilgi demektir. İçindeki ilk ayırıcı ne tür bilgi olduğunu söyler:
+
+::tablo
+Yazılış | Anlamı
+`{a | b | c}` | alternatifler (yazma süreci)
+`{$ad}` | değişken
+`{kırmızı: metin}` | renk
+`{kelime = anlam}` | anlam notu
+::
+
+Renkler: kırmızı, turuncu, sarı, yeşil, mavi, mor, gri. Başka bir ad yazılırsa `mrk-renk-ad` sınıfıyla çıkar, kendi stilinle boyayabilirsin.
+
+Anlam notu, kelimenin üstünde küçük harflerle anlamını gösterir. Uydurma dillerle yazılmış metinler için: {ardh = toprak} {vel = su}.
+
+Hiçbirine uymayan süslü parantez düz metin olarak kalır: {böyle}.
+
+=== Matematik
+
+Satır içinde `$` işaretleri arasına TeX yazılır: $E = mc^2$. Uzun formüller `::matematik` bloğuna yazılır.
+
+`$` işaretinden önce harf ya da rakam varsa matematik başlamaz; böylece 50$ gibi yazılar bozulmaz.
 
 === Kurallar
 
@@ -190,9 +217,31 @@ Gemi ??saat kalkıyordu.
 
 Çizik silinmiş ama saklanan metindir. Temiz modda hiç görünmez, çalışma modunda üstü çizili görünür. Bu yüzden Mürekkep'te ayrı bir "üstü çizili yazı" stili yoktur.
 
-=== Hedef
+=== Hedef ve son tarih
 
-Meta'da `hedef: 2500` yazılırsa görüntüleyici kelime sayısını bu hedefe göre gösterir.
+Meta'da `hedef: 2500` yazılırsa görüntüleyici kelime sayısını bu hedefe göre gösterir. `son: 2026-11-30` da yazılırsa hedefe yetişmek için günde kaç kelime gerektiğini hesaplar.
+
+=== Çekmece
+
+::kod
+::çekmece
+Fenerin bekçisi aslında Ece'nin dayısıydı.
+::
+::
+
+Kestiğin ama atmaya kıyamadığın metin. Temiz modda görünmez, kelime sayısına girmez, süreç panelinde listelenir.
+
+::çekmece
+Bu paragraf spec'ten çıkarıldı ama burada duruyor.
+::
+
+=== Özet
+
+Bir bölümün başlığının hemen altına yazılan `::özet` bloğu o bölümün kısa özetidir. Temiz modda görünmez. Editörün pano görünümünde bölüm kartının üstünde çıkar.
+
+::özet
+Mürekkep'i Markdown'dan ayıran işaretler.
+::
 
 == Bloklar
 
@@ -238,9 +287,15 @@ Gemi hiç gelmedi.
 
 === sahne
 
-Diyalog satırları blok dışında da çalışır, ama `::sahne` bir sahneyi sarmalar ve ona bir yer ya da zaman verir. JSON çıktısında sahneler ayrı birimler olarak çıkar.
+Diyalog satırları blok dışında da çalışır, ama `::sahne` bir sahneyi sarmalar. JSON çıktısında sahneler ayrı birimler olarak çıkar.
 
-::sahne gece, liman
+Argüman iki parçalıdır: iki noktadan önceki kelime sahnenin *adı*, sonrası *tarifi*. Seçenekler `=> ad` ile bu ada gider. Ad olmadan sadece tarif de yazılabilir; tek kelime yazılırsa o kelime addır.
+
+- `::sahne liman: gece, liman` → adı *liman*, tarifi *gece, liman*
+- `::sahne liman` → adı *liman*, tarifi yok
+- `::sahne gece, liman` → adı yok, tarifi *gece, liman*
+
+::sahne liman: gece, liman
 (uzaktan bir düdük sesi)
 @Ece: Kimse yok mu?
 ~ bu iş uzayacak
@@ -248,6 +303,99 @@ Diyalog satırları blok dışında da çalışır, ama `::sahne` bir sahneyi sa
 -> Gemiye bin  => gemi
 -> Geri dön    => ev
 ::
+
+=== kişi
+
+Karakter kartı. Argümanı karakterin adıdır. Baştaki `anahtar: değer` satırları kartın alanlarıdır, sonrasında serbest metin gelebilir. Metinde `@Ece` ya da `@Ece:` geçen yerlerde görüntüleyici bu kartı gösterir.
+
+::kişi Ece
+yaş: 24
+memleket: Kuzey limanları
+Denizden korkar ama bunu kimseye söylemez.
+::
+
+=== zaman
+
+Zaman çizelgesi. Her satır `tarih | olay` biçimindedir. Tarih herhangi bir metin olabilir, kendi takviminle yazabilirsin.
+
+::zaman
+412 | Liman kuruldu
+419 | Fener ilk kez yandı
+431 | Son gemi kalktı ^[Kesin değil, kayıtlar yanmış.]
+::
+
+=== sütunlar
+
+İçerik yan yana sütunlara bölünür. Sütunlar tek başına `||` olan satırla ayrılır. Dar ekranda alt alta iner.
+
+::sütunlar
+*Ece*
+Liman, gece, korku.
+||
+*Bekçi*
+Fener, sır, para.
+::
+
+=== matematik
+
+İçi TeX olarak okunur, ortalanmış bir formül olarak çizilir.
+
+::matematik
+\sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+::
+
+=== çekmece, özet
+
+Yazma süreci bölümünde anlatıldı.
+
+== Dosya dahil etme
+
+Başka bir Mürekkep dosyası `![[dosya.mrk]]` ile olduğu yere dahil edilir. Satırda tek başına durmalıdır. Uzun bir metni bölüm bölüm ayrı dosyalarda yazıp tek belgede birleştirmek için.
+
+::kod
+= Liman Gecesi
+![[bölümler/1-varış.mrk]]
+![[bölümler/2-fener.mrk]]
+![[karakterler.mrk]]
+::
+
+Yol, dahil eden dosyanın klasörüne göredir. Dahil edilen dosyanın meta'sı, karakterleri ve sahneleri ana belgeye katılır. Bir dosya kendini dolaylı yoldan bile dahil edemez; parser döngüyü fark eder.
+
+== Etkileşimli hikâye
+
+Sahneler, seçenekler ve bayraklarla dallanan bir hikâye yazılabilir. Editör bunu oynatabilir, JSON çıktısı da bir oyun motoruna verilebilir.
+
+=== Bayraklar
+
+Sahnenin içinde `$` ile başlayan satır bir bayrak koyar ya da bir değer verir. Bayraklar meta'daki değişkenlerle aynı yerde durur, metinde `{$ad}` ile okunur.
+
+::kod
+$anahtar
+$altın = 5
+$ruh_hali = kaygılı
+::
+
+Bayrak adı tek kelimedir; harf, rakam, `-` ve `_` içerebilir. Temiz modda görünmezler. Toplama, çıkarma gibi işlemler yoktur; Mürekkep bir programlama dili değildir.
+
+=== Koşullu seçenek
+
+Seçeneğin sonuna `?ad` yazılırsa seçenek sadece o bayrak varsa görünür. `?!ad` bayrak yoksa demektir. Birden fazla koşul yazılabilir, hepsi sağlanmalıdır.
+
+::kod
+-> Kapıyı aç        => kapi   ?anahtar
+-> Kapıyı kır       => kapi   ?!anahtar
+-> Bekçiye ödeme yap => rusvet ?altın
+::
+
+=== Kontrol
+
+Görüntüleyici şunları uyarı olarak gösterir:
+
+- Var olmayan bir sahneye giden seçenek
+- Aynı adı taşıyan iki sahne
+- Hiçbir yerde konmayan bir bayrağa bakan koşul
+- Meta'da ya da bayraklarda olmayan bir değişken
+- Bulunamayan dahil dosyası
 
 === Kendi bloğun
 
@@ -264,7 +412,9 @@ Burası ileride kendi bloğu olacak.
 [~] Spec ({$sürüm})
 [x] Parser: metin → ağaç → HTML ve JSON
 [x] Canlı editör: temiz ve çalışma modu
-[ ] Renkli yazı, iki sütun, matematik? >? ihtiyaç olunca bakılacak
+[~] Sürüm 0.2: çekmece, özet, son tarih, dahil etme, kişi, anlam notu, zaman, sahne adı, bayrak, koşul, renk, sütunlar, matematik
+[ ] Editör: pano görünümü, oynat modu, kontrol uyarıları, karakter kartları
+[ ] Rehber ve kopya kâğıdı
 [ ] Obsidian eklentisi
 [ ] Sublime Text eklentisi
 
