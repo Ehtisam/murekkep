@@ -13,7 +13,7 @@
 const { Plugin, TextFileView, PluginSettingTab, Setting, Notice, TFile, TFolder, Keymap, normalizePath, loadMathJax, renderMath, finishRenderMath } = obsidian;
 
 const GORUNUM_TURU = 'murekkep';
-const VARSAYILAN_AYARLAR = { mod: 'temiz', acilis: 'okuma' };
+const VARSAYILAN_AYARLAR = { mod: 'temiz', acilis: 'duzenleme' };
 
 const kac = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -76,6 +76,15 @@ class MurekkepGorunumu extends TextFileView {
     this.kaynak.addEventListener('keydown', (e) => this.tusaBasildi(e));
 
     this.kagit.addEventListener('click', (e) => this.kagittaTiklama(e));
+    // Okurken bir yere çift tıklayınca düzenlemeye geçip o satıra git
+    this.kagit.addEventListener('dblclick', (e) => {
+      const el = e.target.closest('[data-satir]');
+      if (!this.duzenleme) this.duzenlemeyiDegistir();
+      if (el) this.satiraGit(Number(el.dataset.satir));
+    });
+    this.bilgi.addEventListener('click', (e) => {
+      if (e.target.closest('.mrk-bilgi-dugme')) this.duzenlemeyiDegistir();
+    });
     this.kagit.addEventListener('mouseover', (e) => this.kagittaUzerine(e));
     this.kagit.addEventListener('mouseout', (e) => { if (e.target.closest('[data-kisi]')) this.kisiKartiniKapat(); });
 
@@ -127,6 +136,20 @@ class MurekkepGorunumu extends TextFileView {
       this.vurgulamayiGuncelle();
       setTimeout(() => this.kaynak.focus(), 0);
     }
+    if (this.belge) this.bilgiyiCiz(this.belge);
+  }
+
+  satiraGit(n) {
+    const metin = this.kaynak.value;
+    let bas = 0;
+    for (let i = 1; i < n && bas !== -1; i++) bas = metin.indexOf('\n', bas) + 1 || -1;
+    if (bas === -1) bas = metin.length;
+    let son = metin.indexOf('\n', bas);
+    if (son === -1) son = metin.length;
+    this.kaynak.focus();
+    this.kaynak.setSelectionRange(son, son);
+    const satirEl = this.vurgu.querySelectorAll('.sl')[n - 1];
+    if (satirEl) this.kaynak.scrollTop = Math.max(0, satirEl.offsetTop - this.kaynak.clientHeight / 3);
   }
 
   duzenlemeyiDegistir() {
@@ -166,7 +189,7 @@ class MurekkepGorunumu extends TextFileView {
       if (d.tur === 'blok' && d.ad === 'kişi' && d.arg) this.kisiKartlari.set(d.arg, d);
     });
 
-    this.kagit.innerHTML = Murekkep.html(belge, { mod: this.mod, matematik: matematikYerTutucu, icBaglanti: (h) => h });
+    this.kagit.innerHTML = Murekkep.html(belge, { mod: this.mod, matematik: matematikYerTutucu, icBaglanti: (h) => h, konum: true });
     for (const a of this.kagit.querySelectorAll('a.mrk-ic')) a.addClass('internal-link');
     await matematigiCiz(this.kagit);
     this.bilgiyiCiz(belge);
@@ -186,7 +209,10 @@ class MurekkepGorunumu extends TextFileView {
       const liste = uyarilar.map((u) => `${u.dosya || 'bu dosya'}:${u.satir}  ${u.mesaj}`).join('\n');
       parcalar.push(`<span class="mrk-bilgi-is" title="${kac(liste)}">${uyarilar.length} uyarı</span>`);
     }
-    this.bilgi.innerHTML = parcalar.join(' · ');
+    const dugme = this.duzenleme
+      ? '<button class="mrk-bilgi-dugme" title="Sadece kâğıdı göster">Oku</button>'
+      : '<button class="mrk-bilgi-dugme mod-cta" title="Yazı ve kâğıdı yan yana aç (ya da kâğıtta çift tıkla)">Düzenle</button>';
+    this.bilgi.innerHTML = dugme + '<span>' + parcalar.join(' · ') + '</span>';
   }
 
   // --- Kâğıtta etkileşim ---
@@ -315,7 +341,7 @@ class MurekkepAyarlari extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Dosya açılınca')
-      .setDesc('Okuma sadece kâğıdı gösterir. Düzenleme, yazıyla kâğıdı yan yana açar.')
+      .setDesc('Düzenleme, yazıyla kâğıdı yan yana açar. Okuma sadece kâğıdı gösterir; kâğıtta çift tıklayınca düzenlemeye geçer.')
       .addDropdown((d) =>
         d
           .addOption('okuma', 'Okuma')
