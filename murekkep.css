@@ -145,7 +145,8 @@ body {
 .mrk-renk-mavi { color: var(--r-mavi); }
 .mrk-renk-mor { color: var(--r-mor); }
 .mrk-renk-gri { color: var(--r-gri); }
-.mrk-anlam rt { font-family: system-ui, sans-serif; font-size: 0.5em; color: var(--soluk); letter-spacing: 0.02em; }
+.mrk-anlam { ruby-align: center; }
+.mrk-anlam rt { font-family: system-ui, sans-serif; font-size: 0.5em; color: var(--soluk); letter-spacing: 0.02em; white-space: nowrap; }
 .mrk-matematik-blok { margin: 1.4em 0; overflow-x: auto; text-align: center; }
 .mrk-matematik-blok math { font-size: 1.15em; }
 .mrk-matematik-cig { color: var(--soluk); }
