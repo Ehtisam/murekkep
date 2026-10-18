@@ -326,6 +326,7 @@
 
 <script src="kutuphane/katex/katex.min.js"></script>
 <script src="murekkep.js"></script>
+<script src="vurgulayici.js"></script>
 <script>
 'use strict';
 
@@ -465,112 +466,7 @@ const matematik = window.katex
   ? (tex, blok) => katex.renderToString(tex, { output: 'mathml', displayMode: blok, throwOnError: false })
   : undefined;
 
-// ====================================================================
-// Vurgulama (editör renklendirmesi)
-// Parser'dan bağımsız, daha kaba bir tarayıcı. Amacı doğru ağaç kurmak değil,
-// yazarken işaretleri renkle göstermek. Sublime eklentisi de aynı kuralları izleyecek.
-// ====================================================================
-
 const kac = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const sp = (sinif, icerik) => `<span class="v-${sinif}">${icerik}</span>`;
-
-// Satır içi kurallar. Her biri "tam bu noktada eşleşiyor mu?" diye bakılan bir sticky regex.
-const SATIR_ICI = [
-  [/\\./y, 'isaret'],
-  [/(`+)[^`]*?\1/y, 'kod'],
-  [/(?<=\s);;.*$/y, 'yorum'],
-  [/(?<=\s|^)>>.*$/y, 'not'],
-  [/(?<=\s|^)>\?.*$/y, 'soru'],
-  [/!?\[\[[^\]]*\]\]/y, 'baglanti'],
-  [/\^\[[^\]]*\]/y, 'isaret'],
-  [/\{\$[\p{L}\p{N}_-]+\}/uy, 'degisken'],
-  [/\{[^{}]*\|[^{}]*\}/y, 'alt'],
-  [/\{[\p{L}][\p{L}\p{N}_-]*:\s[^{}]*\}/uy, 'renk'],
-  [/\{[^{}=]+=[^{}=]+\}/y, 'anlam'],
-  [/(?<![\p{L}\p{N}])\$(?=[^\s$])[^$]*?\S\$(?![\p{L}\p{N}])/uy, 'kod'],
-  [/\?\?[\p{L}\p{N}_-]*/uy, 'bosluk'],
-  [/~~[^~]+~~/y, 'cizik'],
-  [/!![^!]+!!/y, 'vurgu'],
-  [/(?<![\p{L}\p{N}])\*(?=\S)[^*]*?\S\*(?![\p{L}\p{N}])/uy, 'kalin'],
-  [/(?<=\s|^|\()\/(?=\S)[^/]*?\S\/(?![\p{L}\p{N}])/uy, 'italik'],
-  [/(?<![\p{L}\p{N}])_(?=\S)[^_]*?\S_(?![\p{L}\p{N}])/uy, 'italik'],
-  [/(?:https?:\/\/|www\.)[^\s<>]+/iy, 'baglanti'],
-  [/(?<=\s|^|\()[#@][\p{L}\p{N}_-]+/uy, 'etiket'],
-];
-// Bu karakterlerden biri yoksa o noktada hiçbir kuralı denemeye gerek yok
-const TETIK = new Set('\\`;>![^{?~*/_#@$hHwW');
-
-function satirIciVurgula(s) {
-  let cikti = '';
-  let duz = '';
-  let i = 0;
-  while (i < s.length) {
-    if (TETIK.has(s[i])) {
-      let bulundu = false;
-      for (const [re, sinif] of SATIR_ICI) {
-        re.lastIndex = i;
-        const m = re.exec(s);
-        if (m && m[0].length) {
-          cikti += kac(duz) + sp(sinif, kac(m[0]));
-          duz = '';
-          i += m[0].length;
-          bulundu = true;
-          break;
-        }
-      }
-      if (bulundu) continue;
-    }
-    duz += s[i++];
-  }
-  return cikti + kac(duz);
-}
-
-const onbellek = new Map(); // satır metni -> vurgulu HTML
-
-function satirVurgula(s) {
-  if (onbellek.has(s)) return onbellek.get(s);
-  let m;
-  let h;
-  const duz = s.trim();
-  if (duz.startsWith(';;')) h = sp('yorum', kac(s));
-  else if (/^\s*::/.test(s) || /^\s*\|\|\s*$/.test(s)) h = sp('blok', kac(s));
-  else if ((m = /^(\s*={1,6}\s)(.*?)(\s*\[(?:taslak|gözden geçir|bitti)\])?$/u.exec(s)))
-    h = sp('isaret', kac(m[1])) + sp('baslik', satirIciVurgula(m[2])) + (m[3] ? sp('durum', kac(m[3])) : '');
-  else if (/^\s*-{3,}\s*$/.test(s)) h = sp('isaret', kac(s));
-  else if (/^\s*\$[\p{L}\p{N}_-]+(\s*=[^$]*)?$/u.test(s)) h = sp('degisken', kac(s));
-  else if ((m = /^(\s*!\[\[[^\]]+\.mrk[^\]]*\]\])\s*$/.exec(s))) h = sp('baglanti', kac(s));
-  else if ((m = /^(\s*(?:[-+|]|\[[ x~-]\])\s)(.*)$/.exec(s))) h = sp('isaret', kac(m[1])) + satirIciVurgula(m[2]);
-  else if ((m = /^(\s*->\s?)(.*?)(\s+=>\s*[^\s?]+)?((?:\s+\?!?[\p{L}\p{N}_-]+)*)\s*$/u.exec(s)))
-    h = sp('isaret', kac(m[1])) + satirIciVurgula(m[2]) + (m[3] ? sp('blok', kac(m[3])) : '') + (m[4] ? sp('kosul', kac(m[4])) : '');
-  else if ((m = /^(\s*@[\p{L}\p{N}_-]+:)(.*)$/u.exec(s))) h = sp('konusan', kac(m[1])) + satirIciVurgula(m[2]);
-  else if (/^\s*~\s/.test(s)) h = sp('dusunce', satirIciVurgula(s));
-  else if (/^\s*\(.*\)\s*$/.test(s)) h = sp('yon', kac(s));
-  else h = satirIciVurgula(s);
-  if (onbellek.size > 5000) onbellek.clear();
-  onbellek.set(s, h);
-  return h;
-}
-
-function vurgulaHepsi(metin) {
-  const satirlar = metin.split('\n');
-  const parcalar = [];
-  let hamSeviye = 0; // ::kod ve ::matematik içindeyken renklendirme yapılmaz
-  for (const s of satirlar) {
-    const duz = s.trim();
-    let h;
-    if (hamSeviye > 0) {
-      if (duz === '::') hamSeviye--;
-      else if (/^::[\p{L}\p{N}_-]/u.test(duz)) hamSeviye++;
-      h = hamSeviye === 0 ? sp('blok', kac(s)) : sp('kod', kac(s));
-    } else {
-      if (/^::(kod|matematik)(\s|$)/.test(duz)) hamSeviye = 1;
-      h = satirVurgula(s);
-    }
-    parcalar.push(`<span class="sl">${h}</span>`);
-  }
-  // Sondaki boş satırın da yüksekliği olsun diye fazladan bir boşluk
-  return parcalar.join('\n') + '\n ';
-}
 
 // ====================================================================
 // Yeniden çizim
@@ -580,7 +476,7 @@ let cizimBekliyor = false;
 let satirElemanlari = []; // kâğıttaki [data-satir] elemanları, kaydırma eşlemesi için
 
 function vurgulamayiGuncelle() {
-  vurgu.innerHTML = vurgulaHepsi(kaynak.value);
+  vurgu.innerHTML = Vurgulayici.vurgula(kaynak.value);
   vurgu.scrollTop = kaynak.scrollTop;
 }
 

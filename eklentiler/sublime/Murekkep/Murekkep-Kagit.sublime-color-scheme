@@ -1,0 +1,75 @@
+{
+  // Mürekkep açık şema: kırık beyaz kâğıt, lacivert mürekkep. Renkler murekkep.css ile aynı.
+  "name": "Mürekkep Kâğıt",
+  "author": "Garantech",
+  "variables": {
+    "kagit": "#f6f4ee",
+    "murekkep": "#1d2433",
+    "soluk": "#6b7080",
+    "lacivert": "#2a4a8a",
+    "not": "#f2e3a6",
+    "not_yazi": "#5c4a0a",
+    "soru": "#f3cfc4",
+    "soru_yazi": "#7a2412",
+    "blok": "#7b4a9a",
+    "kalin": "#8a3b12",
+    "italik": "#2d6a5a",
+    "konusan": "#1f6b6b",
+    "kod": "#6a5a2a",
+    "kutu": "#ece8dd"
+  },
+  "globals": {
+    "background": "var(kagit)",
+    "foreground": "var(murekkep)",
+    "caret": "var(lacivert)",
+    "selection": "color(var(lacivert) alpha(0.18))",
+    "selection_border": "color(var(lacivert) alpha(0.18))",
+    "line_highlight": "color(var(murekkep) alpha(0.04))",
+    "gutter": "var(kagit)",
+    "gutter_foreground": "color(var(soluk) alpha(0.6))",
+    "invisibles": "color(var(soluk) alpha(0.4))",
+    "find_highlight": "var(not)",
+    "find_highlight_foreground": "var(not_yazi)",
+    "brackets_foreground": "var(lacivert)",
+    "guide": "color(var(soluk) alpha(0.15))"
+  },
+  "rules": [
+    { "name": "Yorum", "scope": "comment.line.murekkep", "foreground": "color(var(soluk) alpha(0.8))", "font_style": "italic" },
+    { "name": "Kenar notu", "scope": "comment.line.note.murekkep", "foreground": "var(not_yazi)", "background": "var(not)", "font_style": "" },
+    { "name": "Soru", "scope": "comment.line.question.murekkep", "foreground": "var(soru_yazi)", "background": "var(soru)", "font_style": "" },
+    { "name": "Boşluk", "scope": "invalid.deprecated.gap.murekkep", "foreground": "var(soru_yazi)", "background": "var(soru)" },
+    { "name": "Çizik", "scope": "markup.deleted.strike.murekkep", "foreground": "var(soluk)", "font_style": "stippled_underline" },
+    { "name": "Alternatif", "scope": "markup.changed.alternative.murekkep", "foreground": "var(lacivert)", "background": "color(var(lacivert) alpha(0.1))" },
+
+    { "name": "Başlık işareti", "scope": "punctuation.definition.heading.murekkep", "foreground": "var(soluk)" },
+    { "name": "Başlık", "scope": "entity.name.section.murekkep", "foreground": "var(lacivert)", "font_style": "bold" },
+    { "name": "Bölüm durumu", "scope": "storage.modifier.status.murekkep", "foreground": "var(soluk)" },
+
+    { "name": "Blok", "scope": "keyword.control.block.murekkep, punctuation.definition.block.murekkep, punctuation.separator.column.murekkep", "foreground": "var(blok)" },
+    { "name": "Blok argümanı", "scope": "string.unquoted.argument.murekkep", "foreground": "var(soluk)" },
+    { "name": "Sahne adı ve hedef", "scope": "entity.name.label.scene.murekkep, entity.name.label.target.murekkep", "foreground": "var(blok)", "font_style": "bold" },
+    { "name": "Meta anahtarı", "scope": "variable.other.member.key.murekkep", "foreground": "var(blok)" },
+    { "name": "Meta değeri", "scope": "string.unquoted.value.murekkep", "foreground": "var(murekkep)" },
+    { "name": "Ham blok", "scope": "markup.raw.block.murekkep", "foreground": "var(kod)" },
+
+    { "name": "İşaretler", "scope": "punctuation.definition.list_item.murekkep, punctuation.definition.blockquote.murekkep, meta.separator.murekkep, punctuation.definition.checkbox.murekkep, punctuation.definition.thought.murekkep, keyword.operator.arrow.murekkep", "foreground": "var(soluk)" },
+    { "name": "Görev durumu", "scope": "constant.language.checkbox.murekkep", "foreground": "var(lacivert)", "font_style": "bold" },
+    { "name": "Alıntı", "scope": "markup.quote.murekkep", "foreground": "var(soluk)", "font_style": "italic" },
+    { "name": "Konuşan", "scope": "entity.name.function.speaker.murekkep", "foreground": "var(konusan)", "font_style": "bold" },
+    { "name": "İç ses ve sahne yönü", "scope": "markup.italic.thought.murekkep, markup.italic.direction.murekkep", "foreground": "var(soluk)", "font_style": "italic" },
+    { "name": "Koşul", "scope": "variable.parameter.condition.murekkep", "foreground": "var(soru_yazi)" },
+    { "name": "Bayrak", "scope": "meta.flag.murekkep, variable.other.flag.murekkep", "foreground": "var(blok)" },
+
+    { "name": "Kalın", "scope": "markup.bold.murekkep", "foreground": "var(kalin)", "font_style": "bold" },
+    { "name": "İtalik", "scope": "markup.italic.murekkep", "foreground": "var(italik)", "font_style": "italic" },
+    { "name": "Altı çizili", "scope": "markup.underline.murekkep", "font_style": "underline" },
+    { "name": "Vurgu", "scope": "markup.highlight.murekkep", "background": "var(not)" },
+    { "name": "Kod ve matematik", "scope": "markup.raw.inline.murekkep, markup.raw.math.murekkep", "foreground": "var(kod)", "background": "var(kutu)" },
+    { "name": "Bağlantı", "scope": "markup.underline.link.murekkep", "foreground": "var(lacivert)", "font_style": "underline" },
+    { "name": "Etiket ve kişi", "scope": "entity.name.tag.murekkep, entity.other.person.murekkep", "foreground": "var(lacivert)" },
+    { "name": "Değişken, renk, anlam notu", "scope": "variable.other.murekkep, string.other.color.murekkep", "foreground": "var(blok)" },
+    { "name": "Anlam notu", "scope": "string.quoted.gloss.murekkep", "foreground": "var(italik)", "font_style": "underline" },
+    { "name": "Dipnot", "scope": "string.other.footnote.murekkep", "foreground": "var(soluk)" },
+    { "name": "Kaçış", "scope": "constant.character.escape.murekkep", "foreground": "var(soluk)" }
+  ]
+}

@@ -1,0 +1,136 @@
+/* Obsidian'a özel stil. derle.js bunu murekkep.css'in (kökü ve body'si atılmış) arkasına ekler.
+   Renkler Obsidian temasından gelir; böylece açık ve koyu temada, başka temalarda da uyar. */
+
+.murekkep-gorunum {
+  --kagit: var(--background-primary);
+  --murekkep: var(--text-normal);
+  --soluk: var(--text-muted);
+  --cizgi: var(--background-modifier-border);
+  --lacivert: var(--text-accent);
+  --kutu: var(--background-secondary);
+  --not: rgba(var(--color-yellow-rgb), 0.28);
+  --not-yazi: var(--text-normal);
+  --soru: rgba(var(--color-red-rgb), 0.18);
+  --soru-yazi: var(--color-red);
+  --r-kirmizi: var(--color-red);
+  --r-turuncu: var(--color-orange);
+  --r-sari: var(--color-yellow);
+  --r-yesil: var(--color-green);
+  --r-mavi: var(--color-blue);
+  --r-mor: var(--color-purple);
+  --r-gri: var(--text-muted);
+  --yazi: var(--font-text);
+  --kod: var(--font-monospace);
+}
+
+.murekkep-gorunum .mrk { font-size: var(--font-text-size); max-width: var(--file-line-width, 40rem); }
+
+/* --- .mrk görünümü: okuma (sadece kâğıt) ya da düzenleme (yazı + kâğıt) --- */
+
+.view-content.murekkep-gorunum {
+  display: grid;
+  padding: 0;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.murekkep-gorunum.mrk-okuma { grid-template-columns: minmax(0, 1fr); }
+.murekkep-gorunum.mrk-okuma .mrk-yazi { display: none; }
+.murekkep-gorunum.mrk-duzenleme { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@container (max-width: 760px) {
+  .murekkep-gorunum.mrk-duzenleme { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 1fr; }
+}
+
+/* Renklendirme: arkada renkli <pre>, önde şeffaf yazılı <textarea>. İkisi birebir aynı ölçüde olmalı. */
+.mrk-yazi { position: relative; min-height: 0; border-right: 1px solid var(--background-modifier-border); }
+.murekkep-gorunum .mrk-vurgu,
+.murekkep-gorunum textarea.mrk-kaynak {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 24px 20px 40vh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--font-monospace);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-y: scroll;
+  font-variant-ligatures: none;
+}
+.murekkep-gorunum .mrk-vurgu { pointer-events: none; overflow: hidden scroll; background: transparent; color: var(--text-normal); }
+.murekkep-gorunum textarea.mrk-kaynak,
+.murekkep-gorunum textarea.mrk-kaynak:focus,
+.murekkep-gorunum textarea.mrk-kaynak:hover {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--text-normal);
+  resize: none;
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+.murekkep-gorunum textarea.mrk-kaynak::selection { background: var(--text-selection); color: transparent; }
+
+.mrk-sag { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+.mrk-bilgi {
+  padding: 6px 16px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-variant-numeric: tabular-nums;
+}
+.mrk-bilgi-is { color: var(--text-error); }
+.mrk-kagit { overflow-y: auto; padding: 32px 24px 30vh; }
+
+/* Renk sınıfları (vurgulayici.js) */
+.murekkep-gorunum .v-isaret,
+.murekkep-gorunum .v-yorum,
+.murekkep-gorunum .v-dusunce,
+.murekkep-gorunum .v-yon,
+.murekkep-gorunum .v-durum { color: var(--text-muted); }
+.murekkep-gorunum .v-yorum { opacity: 0.75; }
+.murekkep-gorunum .v-baslik { color: var(--text-accent); }
+.murekkep-gorunum .v-blok,
+.murekkep-gorunum .v-degisken,
+.murekkep-gorunum .v-renk { color: var(--color-purple); }
+.murekkep-gorunum .v-kod { color: var(--color-yellow); }
+.murekkep-gorunum .v-kalin { color: var(--color-orange); }
+.murekkep-gorunum .v-italik { color: var(--color-green); }
+.murekkep-gorunum .v-vurgu,
+.murekkep-gorunum .v-not { background: rgba(var(--color-yellow-rgb), 0.28); }
+.murekkep-gorunum .v-baglanti,
+.murekkep-gorunum .v-etiket { color: var(--text-accent); }
+.murekkep-gorunum .v-konusan { color: var(--color-cyan); }
+.murekkep-gorunum .v-soru,
+.murekkep-gorunum .v-bosluk { background: rgba(var(--color-red-rgb), 0.18); color: var(--color-red); }
+.murekkep-gorunum .v-kosul { color: var(--color-red); }
+.murekkep-gorunum .v-cizik { color: var(--text-muted); text-decoration: line-through; }
+.murekkep-gorunum .v-alt { background: rgba(var(--color-blue-rgb), 0.15); color: var(--text-accent); }
+.murekkep-gorunum .v-anlam { color: var(--color-green); text-decoration: underline dotted; }
+
+/* Karakter kartı (fareyle üstüne gelince) */
+.mrk-kisi-ipucu {
+  position: fixed;
+  z-index: var(--layer-tooltip);
+  width: 300px;
+  max-width: calc(100vw - 16px);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-s);
+  pointer-events: none;
+}
+.mrk-kisi-ipucu .mrk-kisi-karti { margin: 0; border: 0; }
+[data-kisi]:not(aside) { cursor: help; }
+
+/* .md notunun içindeki ```mrk bloğu */
+.mrk-gomulu .mrk { max-width: none; margin: 0; }
+.mrk-gomulu .mrk > :first-child { margin-top: 0; }

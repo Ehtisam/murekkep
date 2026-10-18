@@ -1,0 +1,9 @@
+{
+  "id": "murekkep",
+  "name": "Mürekkep",
+  "version": "0.2.0",
+  "minAppVersion": "1.4.0",
+  "description": "Mürekkep (.mrk) belgelerini açar, düzenler ve gösterir. Notların içinde ```mrk blokları da çizilir.",
+  "author": "Garantech",
+  "isDesktopOnly": false
+}

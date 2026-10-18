@@ -399,6 +399,9 @@
     return Math.floor(n / 2);
   }
 
+  // ![[dosya.mrk]] satırı (satırda tek başına)
+  const DAHIL_SATIRI = /^\s*!\[\[\s*([^\]|]+?\.mrk)\s*(?:\|[^\]]*)?\]\]\s*$/u;
+
   // Yol yardımcıları (dahil etme için). Her zaman "/" kullanılır.
   function dizin(yol) {
     const i = yol.lastIndexOf('/');
@@ -468,7 +471,7 @@
       if (duz === '') { kapat(); o.i++; continue; }
 
       // ![[dosya.mrk]] tek başına: başka bir dosyayı buraya dahil eder
-      if ((m = /^!\[\[\s*([^\]|]+?\.mrk)\s*(?:\|[^\]]*)?\]\]$/u.exec(duz))) {
+      if ((m = DAHIL_SATIRI.exec(duz))) {
         kapat();
         o.i++;
         cikti.push(dahilEt(m[1], durum, no));
@@ -1192,5 +1195,17 @@
     return uyarilar;
   }
 
-  return { surum: SURUM, ayristir, html, json, istatistik, kontrol, sahneler, gez: gezAgac };
+  return {
+    surum: SURUM,
+    ayristir,
+    html,
+    json,
+    istatistik,
+    kontrol,
+    sahneler,
+    gez: gezAgac,
+    // Dahil edilen dosyaları önceden okuması gereken araçlar için (ör. Obsidian eklentisi)
+    yol: { dizin, birlestir: yolBirlestir },
+    DAHIL_SATIRI,
+  };
 });

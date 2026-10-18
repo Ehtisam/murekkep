@@ -1,0 +1,20 @@
+// .mrk dosyalarına özel ayarlar. Değiştirmek için Sublime'da bir .mrk dosyası açıkken:
+// Preferences > Settings – Syntax Specific. Oraya yazdığın her şey buradakini ezer.
+{
+  // İşletim sistemi açık temadaysa Kâğıt, koyu temadaysa Gece.
+  // Kendi şemanı istersen: "color_scheme": "Mariana.sublime-color-scheme"
+  "color_scheme": "auto",
+  "light_color_scheme": "Packages/Murekkep/Murekkep-Kagit.sublime-color-scheme",
+  "dark_color_scheme": "Packages/Murekkep/Murekkep-Gece.sublime-color-scheme",
+
+  // Yazı yazmak için: satırlar kaydırılsın, metin ortada dursun
+  "word_wrap": true,
+  "wrap_width": 88,
+  "draw_centered": true,
+  "line_padding_top": 2,
+  "line_padding_bottom": 2,
+
+  "tab_size": 2,
+  "translate_tabs_to_spaces": true,
+  "font_options": ["no_calt", "no_liga"]
+}

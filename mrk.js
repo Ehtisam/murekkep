@@ -6,6 +6,7 @@
 //   node mrk.js belge.mrk --json       -> belge.json
 //   node mrk.js belge.mrk --istatistik -> kelime sayısı, notlar, boşluklar...
 //   node mrk.js belge.mrk --kontrol    -> kopuk seçenekler, tanımsız bayraklar...
+//   --ac                               -> üretilen dosyayı tarayıcıda aç
 
 const fs = require('fs');
 const path = require('path');
@@ -95,3 +96,14 @@ ${govde}
 const hedefDosya = path.join(path.dirname(dosya), ad + uzanti);
 fs.writeFileSync(hedefDosya, cikti, 'utf8');
 console.log(`${hedefDosya} yazıldı.`);
+
+// --ac: çıktıyı varsayılan programla (HTML için tarayıcı) aç
+if (secenek('ac')) {
+  const { spawn } = require('child_process');
+  const tam = path.resolve(hedefDosya);
+  const [komut, args] =
+    process.platform === 'win32' ? ['cmd', ['/c', 'start', '', tam]] :
+    process.platform === 'darwin' ? ['open', [tam]] :
+    ['xdg-open', [tam]];
+  spawn(komut, args, { detached: true, stdio: 'ignore' }).unref();
+}

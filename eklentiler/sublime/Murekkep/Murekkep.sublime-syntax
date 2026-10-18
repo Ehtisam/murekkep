@@ -1,0 +1,236 @@
+%YAML 1.2
+---
+# Mürekkep sözdizimi. Kurallar editor.html'deki renklendirmeyle aynı:
+# satır başı işaretleri satırın ne olduğunu söyler, satır içi işaretler her yerde aranır.
+# Renkler için Murekkep-Kagit / Murekkep-Gece şemalarına bak; scope adları onlarla eşleşir.
+name: Mürekkep
+scope: text.murekkep
+file_extensions: [mrk]
+version: 2
+
+variables:
+  ad: '[\p{L}\p{N}_-]+'
+  harf_degil: '(?<![\p{L}\p{N}])'
+  harf_gelmez: '(?![\p{L}\p{N}])'
+
+contexts:
+  main:
+    - include: satir-basi
+    - include: satir-ici
+
+  # ------------------------------------------------------------------
+  # Satır başı işaretleri
+  # ------------------------------------------------------------------
+  satir-basi:
+    # ;; yorum satırı
+    - match: '^\s*;;.*$\n?'
+      scope: comment.line.murekkep
+
+    # ::kod ve ::matematik: içi ham, iç içe ::ad satırları sayılır
+    - match: '^\s*(::)(kod|matematik)\b(.*)$\n?'
+      captures:
+        1: punctuation.definition.block.begin.murekkep
+        2: keyword.control.block.murekkep
+        3: string.unquoted.argument.murekkep
+      push: ham
+
+    # ::meta: anahtar: değer satırları
+    - match: '^\s*(::)(meta)\s*$\n?'
+      captures:
+        1: punctuation.definition.block.begin.murekkep
+        2: keyword.control.block.murekkep
+      push: meta
+
+    # ::sahne ad: tarif  /  ::sahne ad
+    - match: '^\s*(::)(sahne)\s+({{ad}})\s*(?:(:)(.*))?$\n?'
+      captures:
+        1: punctuation.definition.block.begin.murekkep
+        2: keyword.control.block.murekkep
+        3: entity.name.label.scene.murekkep
+        4: punctuation.separator.murekkep
+        5: string.unquoted.argument.murekkep
+
+    # ::ad argüman (diğer bütün bloklar)
+    - match: '^\s*(::)({{ad}})(.*)$\n?'
+      captures:
+        1: punctuation.definition.block.begin.murekkep
+        2: keyword.control.block.murekkep
+        3: string.unquoted.argument.murekkep
+
+    # :: kapanış ve || sütun ayracı
+    - match: '^\s*::\s*$\n?'
+      scope: punctuation.definition.block.end.murekkep
+    - match: '^\s*\|\|\s*$\n?'
+      scope: punctuation.separator.column.murekkep
+
+    # = Başlık [durum]
+    - match: '^\s*(={1,6})\s+(.*?)(\s*\[(?:taslak|gözden geçir|bitti)\])?\s*$\n?'
+      captures:
+        0: markup.heading.murekkep
+        1: punctuation.definition.heading.murekkep
+        2: entity.name.section.murekkep
+        3: storage.modifier.status.murekkep
+
+    # --- ayraç
+    - match: '^\s*-{3,}\s*$\n?'
+      scope: meta.separator.murekkep punctuation.definition.separator.murekkep
+
+    # ![[dosya.mrk]] dahil etme
+    - match: '^\s*!\[\[[^\]]+\.mrk[^\]]*\]\]\s*$\n?'
+      scope: markup.underline.link.include.murekkep
+
+    # $bayrak  /  $ad = değer  (satırda ikinci $ varsa matematiktir)
+    - match: '^\s*(\$)({{ad}})(?:\s*(=)\s*([^$\n]*))?$\n?'
+      captures:
+        0: meta.flag.murekkep
+        1: punctuation.definition.variable.murekkep
+        2: variable.other.flag.murekkep
+        3: keyword.operator.assignment.murekkep
+        4: string.unquoted.value.murekkep
+
+    # -> seçenek => hedef ?koşul
+    - match: '^\s*(->)(.*?)(?:\s+(=>)\s*([^\s?]+))?((?:\s+\?!?{{ad}})*)\s*$\n?'
+      captures:
+        1: keyword.operator.arrow.murekkep
+        2: meta.choice.murekkep
+        3: keyword.operator.arrow.murekkep
+        4: entity.name.label.target.murekkep
+        5: variable.parameter.condition.murekkep
+
+    # @Ad: replik (satırın geri kalanı satır içi kurallarla)
+    - match: '^\s*(@)({{ad}})(:)'
+      captures:
+        1: punctuation.definition.speaker.murekkep
+        2: entity.name.function.speaker.murekkep
+        3: punctuation.separator.murekkep
+
+    # ~ iç ses
+    - match: '^\s*(~)\s'
+      captures:
+        1: punctuation.definition.thought.murekkep
+      push: dusunce
+
+    # (sahne yönü)
+    - match: '^\s*\(.*\)\s*$\n?'
+      scope: markup.italic.direction.murekkep
+
+    # | alıntı
+    - match: '^\s*(\|)(?=\s|$)'
+      captures:
+        1: punctuation.definition.blockquote.murekkep
+      push: alinti
+
+    # [ ] görev
+    - match: '^\s*(\[)([ x~-])(\])(?=\s)'
+      captures:
+        0: markup.checkbox.murekkep
+        1: punctuation.definition.checkbox.murekkep
+        2: constant.language.checkbox.murekkep
+        3: punctuation.definition.checkbox.murekkep
+
+    # - madde, + numaralı
+    - match: '^\s*([-+])(?=\s)'
+      captures:
+        1: punctuation.definition.list_item.murekkep
+
+  dusunce:
+    - meta_scope: markup.italic.thought.murekkep
+    - match: '$\n?'
+      pop: true
+    - include: satir-ici
+
+  alinti:
+    - meta_scope: markup.quote.murekkep
+    - match: '$\n?'
+      pop: true
+    - include: satir-ici
+
+  ham:
+    - meta_scope: markup.raw.block.murekkep
+    - match: '^\s*::{{ad}}.*$\n?'
+      push: ham
+    - match: '^\s*(::)\s*$\n?'
+      captures:
+        1: punctuation.definition.block.end.murekkep
+      pop: true
+
+  meta:
+    - meta_scope: meta.block.meta.murekkep
+    - match: '^\s*(::)\s*$\n?'
+      captures:
+        1: punctuation.definition.block.end.murekkep
+      pop: true
+    - match: '^\s*;;.*$\n?'
+      scope: comment.line.murekkep
+    - match: '^\s*([^:;\n][^:\n]*)(:)\s*(.*)$\n?'
+      captures:
+        1: variable.other.member.key.murekkep
+        2: punctuation.separator.key-value.murekkep
+        3: string.unquoted.value.murekkep
+
+  # ------------------------------------------------------------------
+  # Satır içi işaretler
+  # ------------------------------------------------------------------
+  satir-ici:
+    - match: '\\.'
+      scope: constant.character.escape.murekkep
+
+    - match: '(`+)(.+?)(\1)'
+      captures:
+        0: markup.raw.inline.murekkep
+        1: punctuation.definition.raw.murekkep
+        3: punctuation.definition.raw.murekkep
+
+    # ;; satır sonu yorumu, >> kenar notu, >? soru
+    - match: '(?<=\s);;.*$'
+      scope: comment.line.murekkep
+    - match: '(?:(?<=\s)|^)>>.*$'
+      scope: comment.line.note.murekkep
+    - match: '(?:(?<=\s)|^)>\?.*$'
+      scope: comment.line.question.murekkep
+
+    # Bağlantılar ve görseller
+    - match: '!?\[\[[^\]]*\]\]'
+      scope: markup.underline.link.murekkep
+    - match: '(?:https?://|www\.)[^\s<>]+'
+      scope: markup.underline.link.murekkep
+
+    # Dipnot
+    - match: '\^\[[^\]]*\]'
+      scope: string.other.footnote.murekkep
+
+    # Süslü parantez: değişken, alternatif, renk, anlam notu
+    - match: '\{\${{ad}}\}'
+      scope: variable.other.murekkep
+    - match: '\{[^{}\n]*\|[^{}\n]*\}'
+      scope: markup.changed.alternative.murekkep
+    - match: '\{\p{L}[\p{L}\p{N}_-]*:\s[^{}\n]*\}'
+      scope: string.other.color.murekkep
+    - match: '\{[^{}=\n]+=[^{}=\n]+\}'
+      scope: string.quoted.gloss.murekkep
+
+    # $matematik$
+    - match: '{{harf_degil}}\$(?=[^\s$])[^$\n]*?\S\${{harf_gelmez}}'
+      scope: markup.raw.math.murekkep
+
+    # ?? boşluk, ??ipucu
+    - match: '\?\?[\p{L}\p{N}_-]*'
+      scope: invalid.deprecated.gap.murekkep
+
+    # Vurgular
+    - match: '~~[^~\n]+~~'
+      scope: markup.deleted.strike.murekkep
+    - match: '!![^!\n]+!!'
+      scope: markup.highlight.murekkep
+    - match: '{{harf_degil}}\*(?=\S)[^*\n]*?\S\*{{harf_gelmez}}'
+      scope: markup.bold.murekkep
+    - match: '(?:(?<=\s)|^|(?<=\())/(?=\S)[^/\n]*?\S/{{harf_gelmez}}'
+      scope: markup.italic.murekkep
+    - match: '{{harf_degil}}_(?=\S)[^_\n]*?\S_{{harf_gelmez}}'
+      scope: markup.underline.murekkep
+
+    # #etiket ve @kişi
+    - match: '(?:(?<=\s)|^|(?<=\())#{{ad}}'
+      scope: entity.name.tag.murekkep
+    - match: '(?:(?<=\s)|^|(?<=\())@{{ad}}'
+      scope: entity.other.person.murekkep

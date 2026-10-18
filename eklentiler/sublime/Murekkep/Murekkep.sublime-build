@@ -1,0 +1,14 @@
+{
+  // Ctrl+B: HTML üretip tarayıcıda açar. Ctrl+Shift+B: diğer seçenekler.
+  // Kontrol çıktısındaki uyarılara F4 ile sırayla gidilir.
+  "selector": "text.murekkep",
+  "working_dir": "$file_path",
+  "cmd": ["node", "$packages/Murekkep/mrk-kopru.js", "$file", "--ac"],
+  "file_regex": "^(.+?):(\\d+)  (.*)$",
+  "variants": [
+    { "name": "Çalışma modu", "cmd": ["node", "$packages/Murekkep/mrk-kopru.js", "$file", "--calisma", "--ac"] },
+    { "name": "Kontrol", "cmd": ["node", "$packages/Murekkep/mrk-kopru.js", "$file", "--kontrol"] },
+    { "name": "İstatistik", "cmd": ["node", "$packages/Murekkep/mrk-kopru.js", "$file", "--istatistik"] },
+    { "name": "JSON", "cmd": ["node", "$packages/Murekkep/mrk-kopru.js", "$file", "--json"] }
+  ]
+}

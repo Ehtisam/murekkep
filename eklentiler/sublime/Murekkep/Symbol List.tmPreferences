@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ctrl+R: başlıklar ve sahneler arasında atlama -->
+<plist version="1.0">
+<dict>
+  <key>scope</key>
+  <string>text.murekkep entity.name.section, text.murekkep entity.name.label.scene</string>
+  <key>settings</key>
+  <dict>
+    <key>showInSymbolList</key>
+    <integer>1</integer>
+    <key>showInIndexedSymbolList</key>
+    <integer>1</integer>
+  </dict>
+</dict>
+</plist>
