@@ -10,6 +10,8 @@ Liman {sessizdi | ölü gibiydi | uyuyordu}. Rıhtımda tek bir fener yanıyordu
 ~~Hava çok soğuktu.~~ Rüzgâr denizden /tuz ve pas/ kokusu getiriyordu.
 ```
 
+Try the editor in your browser: [ehtisam.github.io/murekkep/editor.html](https://ehtisam.github.io/murekkep/editor.html)
+
 ## Two modes
 
 - **Clean reading:** The document looks like a finished text. Margin notes, questions and struck lines are hidden, and the first of each set of alternatives is shown.
